@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("analyst") // Roles: 'admin', 'analyst'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model AlertEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  severity    String   // 'critical', 'warning', 'info'
+  source      String
+  timestamp   DateTime @default(now())
+  resolved    Boolean  @default(false)
+}
