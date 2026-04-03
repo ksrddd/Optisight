@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { LayoutDashboard, Bell, ShieldAlert, Activity, Settings, Database, FileText, LogOut, ChevronRight, CreditCard } from 'lucide-vue-next'
+import { LayoutDashboard, Bell, Activity, Settings, FileText, LogOut, ChevronRight, CreditCard, Shield, Database, Users, Network } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -71,9 +71,11 @@ const handleLogout = () => {
 
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+  { name: 'Data Sources', path: '/integrations', icon: Network },
   { name: 'Alert Center', path: '/alerts', icon: Bell },
-  { name: 'Security Details', path: '/security', icon: ShieldAlert },
+  { name: 'Security (SOC)', path: '/security', icon: Shield },
   { name: 'System Logs', path: '/logs', icon: Database },
+  { name: 'Access Control', path: '/users', icon: Users },
   { name: 'Export Reports', path: '/reports', icon: FileText },
   { name: 'Subscription', path: '/subscription', icon: CreditCard },
   { name: 'Settings', path: '/settings', icon: Settings },

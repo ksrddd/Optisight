@@ -81,6 +81,7 @@ definePageMeta({
 const toast = inject('toast')
 const router = useRouter()
 const { updateProfile } = useUser()
+const config = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -89,7 +90,7 @@ const loading = ref(false)
 const handleLogin = async () => {
   loading.value = true
   try {
-    const response = await $fetch('http://localhost:3001/api/auth/login', {
+    const response = await $fetch(`${config.public.apiBase}/api/auth/login`, {
       method: 'POST',
       body: { email: email.value, password: password.value }
     })

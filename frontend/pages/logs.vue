@@ -1,118 +1,138 @@
 <template>
   <div class="space-y-8 animate-fade-in">
-    <!-- Header -->
+    <!-- Header Area -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">System Logs</h1>
-        <p class="text-slate-400 mt-1">Real-time technical logs from all system services.</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Infrastructure Data Flow Logs</h1>
+        <p class="text-slate-400 mt-1">Real-time centralized tracing of server transactions and data movements.</p>
       </div>
       <div class="flex items-center gap-3">
-        <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-          <input v-model="searchQuery" type="text" placeholder="Search logs..."
-            class="pl-10 pr-4 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500/50 w-64 transition-all">
-        </div>
-        <button
-          class="p-2 bg-slate-900/50 border border-slate-700/50 rounded-lg text-slate-400 hover:text-white transition-colors">
-          <Filter class="w-4 h-4" />
+        <button @click="toast.add('Log Stream Paused', 'Live stream paused for inspection', 'info')"
+          class="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm border border-indigo-500/20 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2">
+          <Pause class="w-4 h-4" />
+          Pause Stream
         </button>
       </div>
     </div>
 
-    <!-- Logs Table -->
-    <div class="glass rounded-2xl border border-slate-700/50 overflow-hidden flex flex-col max-h-[600px]">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr
-              class="bg-slate-900/40 text-xs uppercase tracking-wider text-slate-400 font-semibold border-b border-white/5 sticky top-0 z-10 backdrop-blur-md">
-              <th class="px-6 py-4">Timestamp</th>
-              <th class="px-6 py-4">Level</th>
-              <th class="px-6 py-4">Service</th>
-              <th class="px-6 py-4">Message</th>
-            </tr>
-          </thead>
-          <transition-group tag="tbody" name="list" class="divide-y divide-white/5">
-            <tr v-for="log in filteredLogs" :key="log.id" class="hover:bg-white/5 transition-colors font-mono text-xs">
-              <td class="px-6 py-3 text-slate-500 whitespace-nowrap">{{ log.timestamp }}</td>
-              <td class="px-6 py-3">
-                <span :class="getLevelClass(log.level)"
-                  class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase transition-all">
-                  {{ log.level }}
-                </span>
-              </td>
-              <td class="px-6 py-3 text-indigo-400/80">{{ log.service }}</td>
-              <td class="px-6 py-3 text-slate-300">{{ log.message }}</td>
-            </tr>
-          </transition-group>
-        </table>
+    <!-- Live Log Console -->
+    <div class="glass-card flex flex-col rounded-2xl border border-slate-700/50 overflow-hidden h-[600px] bg-[#0a0f1d] shadow-2xl">
+      <!-- Terminal Header -->
+      <div class="px-4 py-3 bg-slate-900/80 border-b border-indigo-500/20 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500/50"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/50"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/50"></span>
+          </div>
+          <span class="text-xs font-mono text-indigo-400/80">root@optisight-centralized-aggregator:~#</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-mono text-emerald-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          Streaming ({{ logLines.length }} lines)
+        </div>
       </div>
-    </div>
 
-    <!-- Live Indicator -->
-    <div class="flex items-center gap-2 text-xs text-indigo-400 animate-pulse">
-      <div class="w-2 h-2 rounded-full bg-indigo-500"></div>
-      Streaming live logs...
+      <!-- Log Output -->
+      <div class="p-4 overflow-y-auto flex-1 font-mono text-[13px] leading-relaxed relative" id="log-container">
+        <!-- Lines -->
+        <transition-group name="log-list" tag="div" class="space-y-1">
+          <div v-for="log in logLines" :key="log.id" class="flex hover:bg-white/5 px-2 py-0.5 rounded transition-colors group">
+            <span class="text-slate-500 w-24 flex-shrink-0 select-none">{{ log.timestamp }}</span>
+            <span class="w-16 flex-shrink-0" :class="{
+              'text-emerald-400': log.level === 'INFO',
+              'text-amber-400': log.level === 'WARN',
+              'text-rose-400': log.level === 'ERROR',
+              'text-sky-400': log.level === 'DEBUG'
+            }">[{{ log.level }}]</span>
+            <span class="text-indigo-300 w-32 flex-shrink-0 truncate hidden sm:block">[{{ log.service }}]</span>
+            <span class="text-slate-300 flex-1 ml-2 break-all group-hover:text-white transition-colors">{{ log.message }}</span>
+          </div>
+        </transition-group>
+
+        <div v-if="logLines.length === 0" class="flex items-center justify-center h-full text-slate-500">
+           Connecting to infrastructure streams...
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Search, Filter } from 'lucide-vue-next'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Pause } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted, inject, nextTick } from 'vue'
 
-const searchQuery = ref('')
-const logs = ref([
-  { id: 101, timestamp: '2024-03-27 01:12:04', level: 'info', service: 'auth-v2', message: 'User session validated successfully: uid_8842' },
-  { id: 102, timestamp: '2024-03-27 01:12:07', level: 'warning', service: 'db-proxy', message: 'Slow query detected on primary shard cluster-01' },
-  { id: 103, timestamp: '2024-03-27 01:12:15', level: 'info', service: 'gateway', message: 'Inbound request handled: [POST] /v1/auth/refresh' },
-  { id: 104, timestamp: '2024-03-27 01:12:22', level: 'error', service: 'mailer', message: 'Failed to deliver notification email to: worker-99@node.local' },
-  { id: 105, timestamp: '2024-03-27 01:12:45', level: 'info', service: 'auth-v2', message: 'New JWT issued for client: opti-mobile-app' },
-])
+const toast = inject('toast')
+const logLines = ref([])
+let idCounter = 0
 
-const filteredLogs = computed(() => {
-  if (!searchQuery.value) return logs.value
-  const q = searchQuery.value.toLowerCase()
-  return logs.value.filter(l => l.message.toLowerCase().includes(q) || l.service.toLowerCase().includes(q))
-})
+// Mock data generation for Bank/Infra transactions
+const services = ['Core-Auth', 'DB-Cluster-A', 'Payment-GW', 'Ledger-Node-2', 'Redis-Cache']
+const levels = ['INFO', 'INFO', 'INFO', 'INFO', 'DEBUG', 'WARN']
+const messages = [
+  'Transaction sync completed successfully.',
+  'Cache miss for key user_session:884.',
+  'Data flow latency detected in sub-node.',
+  'Allocating new container for Payment Gateway.',
+  'TLS Handshake successful with client.',
+  'Database query executed in 14ms.',
+  'Memory threshold reached 80% on Node-2.'
+]
 
-const getLevelClass = (level) => {
-  switch (level) {
-    case 'error': return 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-    case 'warning': return 'text-amber-400 bg-amber-500/10 border-amber-500/20'
-    default: return 'text-sky-400 bg-sky-500/10 border-sky-500/20'
+const addRandomLog = () => {
+  const d = new Date()
+  const timestamp = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}.${d.getMilliseconds().toString().padStart(3, '0')}`
+  
+  const level = levels[Math.floor(Math.random() * levels.length)]
+  const service = services[Math.floor(Math.random() * services.length)]
+  let message = messages[Math.floor(Math.random() * messages.length)]
+
+  // Sometimes throw a simulated error for Infra team to see
+  if(Math.random() > 0.95) {
+    logLines.value.push({
+      id: idCounter++,
+      timestamp,
+      level: 'ERROR',
+      service: 'Payment-GW',
+      message: 'Connection timeout while reaching external banking API. Retrying...'
+    })
+  } else {
+    logLines.value.push({
+      id: idCounter++,
+      timestamp,
+      level,
+      service,
+      message
+    })
   }
+
+  // Keep array bounded
+  if(logLines.value.length > 50) {
+    logLines.value.shift()
+  }
+
+  // Auto-scroll
+  nextTick(() => {
+    const el = document.getElementById('log-container')
+    if(el) el.scrollTop = el.scrollHeight
+  })
 }
 
-// Live simulation
-let interval = null
-let nextId = 200
-
+let logInterval
 onMounted(() => {
-  interval = setInterval(() => {
-    const services = ['auth-v2', 'gateway', 'db-proxy', 'mailer', 'security-scanner']
-    const messages = [
-      'Heartbeat signal received from node-04',
-      'Configuration reloaded successfully',
-      'Cache invalidated for namespace: metrics',
-      'Processing incoming packet buffer (45KB)',
-      'Health check passed for container: app-srv-1'
-    ]
-
-    logs.value.unshift({
-      id: nextId++,
-      timestamp: new Date().toISOString().replace('T', ' ').split('.')[0],
-      level: Math.random() > 0.9 ? 'warning' : 'info',
-      service: services[Math.floor(Math.random() * services.length)],
-      message: messages[Math.floor(Math.random() * messages.length)]
-    })
-
-    if (logs.value.length > 50) logs.value.pop()
-  }, 2000)
+  // Pre-fill
+  for(let i=0; i<15; i++) {
+    addRandomLog()
+  }
+  
+  // Stream
+  logInterval = setInterval(() => {
+    addRandomLog()
+  }, 1200) // Emit a log every 1.2s to simulate infra traffic
 })
 
 onUnmounted(() => {
-  if (interval) clearInterval(interval)
+  if (logInterval) clearInterval(logInterval)
 })
 </script>
 
@@ -133,13 +153,20 @@ onUnmounted(() => {
   }
 }
 
-.list-enter-active {
-  transition: all 0.5s ease;
+/* Log list transitions */
+.log-list-enter-active {
+  transition: all 0.3s ease;
 }
-
-.list-enter-from {
+.log-list-enter-from {
   opacity: 0;
-  transform: translateX(-30px);
-  background-color: rgba(99, 102, 241, 0.1);
+  transform: translateX(-20px);
+}
+.log-list-leave-active {
+  transition: all 0.5s ease;
+  position: absolute;
+}
+.log-list-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 </style>

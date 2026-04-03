@@ -41,5 +41,12 @@ logs/
 *.sqlite
 *.sqlite3
 
-# Misc
-/src/generated/prisma/
+# Generated
+src/generated/prisma/
+backend/src/generated/prisma/
+frontend/.nuxt/
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
