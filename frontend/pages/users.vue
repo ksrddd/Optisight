@@ -58,7 +58,8 @@
             <tr v-for="user in users" :key="user.id" class="hover:bg-white/5 transition-colors">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-indigo-300">
+                  <div
+                    class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-indigo-300">
                     {{ user.name.charAt(0) }}
                   </div>
                   <div>
@@ -68,14 +69,14 @@
                 </div>
               </td>
               <td class="px-6 py-4">
-                <span class="px-2.5 py-1 text-xs font-medium rounded-full border"
-                  :class="getRoleBadgeClass(user.role)">
+                <span class="px-2.5 py-1 text-xs font-medium rounded-full border" :class="getRoleBadgeClass(user.role)">
                   {{ user.role }}
                 </span>
               </td>
               <td class="px-6 py-4">
                 <div class="flex flex-wrap gap-1">
-                  <span v-for="perm in user.permissions" :key="perm" class="px-2 py-0.5 text-[10px] bg-slate-800 text-slate-300 rounded border border-slate-700">
+                  <span v-for="perm in user.permissions" :key="perm"
+                    class="px-2 py-0.5 text-[10px] bg-slate-800 text-slate-300 rounded border border-slate-700">
                     {{ perm }}
                   </span>
                 </div>
