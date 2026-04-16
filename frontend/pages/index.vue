@@ -64,111 +64,56 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       
-      <!-- IT Ops & Data: Network Traffic Chart -->
-      <div class="glass-card p-6 glass border border-slate-700/50 flex flex-col">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-            <Activity class="w-5 h-5 text-indigo-400"/> Network Traffic & Server Load
-          </h2>
-          <span class="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20">Live</span>
+      <!-- IT Ops & Data: Network Traffic Chart (Modernized with ApexCharts) -->
+      <div class="glass-card p-6 glass border border-slate-700/50 flex flex-col min-h-[400px]">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex flex-col">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+              <Activity class="w-5 h-5 text-indigo-400"/> Network Traffic & Server Load
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Real-time throughput analysis</p>
+          </div>
+          <span class="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20">Live Monitor</span>
         </div>
         
-        <div class="h-64 relative flex mt-6 pl-10 pb-6">
-          <!-- Y-Axis -->
-          <div class="absolute left-0 top-0 bottom-6 w-10 flex flex-col justify-between text-[10px] text-slate-400 font-mono text-right pr-2">
-            <span>100%</span>
-            <span>75%</span>
-            <span>50%</span>
-            <span>25%</span>
-            <span>0%</span>
-          </div>
-
-          <!-- Chart Area -->
-          <div class="flex-1 relative overflow-hidden border-b border-l border-slate-700/50">
-            <!-- Grid Lines -->
-            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 z-0">
-              <div class="w-full h-px bg-slate-500" v-for="n in 5" :key="n"></div>
-            </div>
-
-            <!-- SVG Line Chart for Network -->
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full z-10 overflow-visible">
-              <defs>
-                <linearGradient id="netGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(99, 102, 241, 0.4)" />
-                  <stop offset="100%" stop-color="rgba(99, 102, 241, 0)" />
-                </linearGradient>
-              </defs>
-              <path :d="networkLinePath" fill="none" stroke="#6366f1" stroke-width="2" class="transition-all duration-1000 ease-in-out"/>
-              <path :d="networkAreaPath" fill="url(#netGradient)" class="transition-all duration-1000 ease-in-out"/>
-              
-              <!-- Plot Points -->
-              <circle v-for="(point, idx) in networkPoints" :key="'net-pt-'+idx"
-                :cx="point.x" :cy="point.y" r="1.5" fill="#818cf8" class="transition-all duration-1000 ease-in-out" />
-            </svg>
-          </div>
-
-          <!-- X-Axis -->
-          <div class="absolute left-10 right-0 bottom-0 h-6 flex justify-between items-end text-[10px] text-slate-400 font-mono px-1">
-            <span>-60s</span>
-            <span>-45s</span>
-            <span>-30s</span>
-            <span>-15s</span>
-            <span>Now</span>
-          </div>
+        <div class="flex-1 min-h-[300px]">
+          <client-only>
+            <apexchart
+              type="line"
+              height="100%"
+              width="100%"
+              :options="networkChartOptions"
+              :series="networkSeries"
+            ></apexchart>
+          </client-only>
         </div>
       </div>
 
-      <!-- Business & IT Ops: Revenue Flow Line Chart -->
-      <div class="glass-card p-6 glass border border-slate-700/50 flex flex-col">
-        <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-            <TrendingUp class="w-5 h-5 text-emerald-400"/> Processed Revenue Flow
-          </h2>
-          <span class="text-xs text-emerald-400">฿ / min</span>
+      <!-- Business & IT Ops: Revenue Flow Area Chart (Modernized with ApexCharts) -->
+      <div class="glass-card p-6 glass border border-slate-700/50 flex flex-col min-h-[400px]">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex flex-col">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+              <TrendingUp class="w-5 h-5 text-emerald-400"/> Processed Revenue Flow
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Global transaction intake velocity</p>
+          </div>
+          <div class="flex flex-col items-end">
+             <span class="text-xs text-emerald-400 font-mono">฿ / min</span>
+             <span class="text-[10px] text-slate-500">Auto-scaling active</span>
+          </div>
         </div>
         
-        <div class="h-64 relative flex mt-6 pl-12 pb-6">
-          <!-- Y-Axis -->
-          <div class="absolute left-0 top-0 bottom-6 w-12 flex flex-col justify-between text-[10px] text-slate-400 font-mono text-right pr-2">
-            <span>500k</span>
-            <span>375k</span>
-            <span>250k</span>
-            <span>125k</span>
-            <span>0</span>
-          </div>
-
-          <!-- Chart Area -->
-          <div class="flex-1 relative overflow-hidden border-b border-l border-slate-700/50">
-            <!-- Grid Lines -->
-            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 z-0">
-              <div class="w-full h-px bg-slate-500" v-for="n in 5" :key="n"></div>
-            </div>
-
-            <!-- SVG Simulated Line Chart for Revenue -->
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full z-10 overflow-visible">
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(52, 211, 153, 0.4)" />
-                  <stop offset="100%" stop-color="rgba(52, 211, 153, 0)" />
-                </linearGradient>
-              </defs>
-              <path :d="revenueLinePath" fill="none" stroke="#34d399" stroke-width="2" class="transition-all duration-1000 ease-in-out"/>
-              <path :d="revenueAreaPath" fill="url(#revenueGradient)" class="transition-all duration-1000 ease-in-out"/>
-              
-              <!-- Plot Points -->
-              <circle v-for="(point, idx) in revenuePoints" :key="'rev-pt-'+idx"
-                :cx="point.x" :cy="point.y" r="1.5" fill="#10b981" class="transition-all duration-1000 ease-in-out" />
-            </svg>
-          </div>
-
-          <!-- X-Axis -->
-          <div class="absolute left-12 right-0 bottom-0 h-6 flex justify-between items-end text-[10px] text-slate-400 font-mono px-1">
-            <span>-60s</span>
-            <span>-45s</span>
-            <span>-30s</span>
-            <span>-15s</span>
-            <span>Now</span>
-          </div>
+        <div class="flex-1 min-h-[300px]">
+          <client-only>
+            <apexchart
+              type="area"
+              height="100%"
+              width="100%"
+              :options="revenueChartOptions"
+              :series="revenueSeries"
+            ></apexchart>
+          </client-only>
         </div>
       </div>
       
@@ -218,9 +163,8 @@
         </div>
       </div>
 
-      <!-- NEW: Predictive Analysis AI -->
+      <!-- Specialized: AI Insight Module -->
       <div class="glass-card p-6 border border-indigo-500/40 relative overflow-hidden">
-        <!-- background glow -->
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/20 blur-[50px] rounded-full pointer-events-none"></div>
         
         <div class="flex items-center justify-between mb-6">
@@ -252,7 +196,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
@@ -263,86 +206,155 @@ import { ref, onMounted, onUnmounted, inject, computed } from 'vue'
 
 const config = useRuntimeConfig()
 const toast = inject('toast')
-const token = process.client ? localStorage.getItem('optisight_token') : ''
+const { user, token, settings } = useUser()
+const { stats: sysStats, liveRevenue, totalRevenue, transactions } = useSystemState()
 
-// Data points
-const networkTraffic = ref(12.4)
-const transactions = ref(4520)
-const liveRevenue = ref(840200)
-const totalRevenue = ref(15420000)
-const systemsOnline = ref(142)
-const totalSystems = ref(145)
+// SEO & Metadata
+useSeoMeta({
+  title: 'Optisight Dashboard | Centralized Monitoring',
+  description: 'Real-time intelligent visibility for IT Ops, SOC, and infrastructure performance.',
+  ogTitle: 'Optisight - Professional Dashboard',
+  ogDescription: 'Centralized infrastructure and security monitoring platform.',
+  ogImage: 'https://api.dicebear.com/9.x/shapes/svg?seed=Optisight',
+  twitterCard: 'summary_large_image',
+})
+
+// Core Stats (Mapped to Global State)
+const networkTraffic = computed(() => sysStats.value.totalRate)
+const systemsOnline = computed(() => sysStats.value.systemsOnline)
+const totalSystems = computed(() => sysStats.value.totalSystems)
+const activeAlerts = computed(() => sysStats.value.activeAlerts)
+
+// Threshold Logic
+const cpuThreshold = computed(() => settings.value.thresholds.find(t => t.name.includes('CPU'))?.value || 85)
 
 const { data: stats, pending } = await useFetch(`${config.public.apiBase}/api/stats`, {
   server: false,
-  headers: { Authorization: `Bearer ${token}` }
+  headers: { Authorization: `Bearer ${token.value}` }
 })
 
-// Function to generate the line paths from points array
-const createLinePath = (pts) => {
-  if (pts.length === 0) return ''
-  let d = `M ${pts[0].x} ${100 - pts[0].y}`
+// ── ApexCharts Configuration ──────────────────────────────────────────────────
+
+// 1. Network Traffic Chart Options
+const networkSeries = ref([{
+  name: 'System Load',
+  data: Array.from({ length: 15 }, () => Math.floor(Math.random() * 40) + 20)
+}])
+
+const networkChartOptions = computed(() => {
+  const currentLoad = networkSeries.value[0].data[networkSeries.value[0].data.length - 1]
+  const isCritical = currentLoad >= cpuThreshold.value
   
-  for (let i = 1; i < pts.length; i++) {
-    const prev = pts[i-1]
-    const curr = pts[i]
-    const cpX = (prev.x + curr.x) / 2
-    d += ` C ${cpX} ${100 - prev.y}, ${cpX} ${100 - curr.y}, ${curr.x} ${100 - curr.y}`
+  return {
+    chart: {
+      id: 'network-monitor',
+      animations: { enabled: true, easing: 'linear', dynamicAnimation: { speed: 1000 } },
+      toolbar: { show: false },
+      background: 'transparent',
+      sparkline: { enabled: false }
+    },
+    theme: { mode: 'dark' },
+    stroke: { curve: 'smooth', width: 3, colors: [isCritical ? '#f43f5e' : '#6366f1'] },
+    colors: [isCritical ? '#f43f5e' : '#6366f1'],
+    grid: { borderColor: '#334155', strokeDashArray: 4, padding: { left: 10, right: 10 } },
+    annotations: {
+      yaxis: [{
+        y: cpuThreshold.value,
+        borderColor: '#f43f5e',
+        label: {
+          show: true,
+          text: `LIMIT: ${cpuThreshold.value}%`,
+          style: { color: "#fff", background: '#f43f5e' }
+        }
+      }]
+    },
+    xaxis: {
+      categories: Array.from({ length: 15 }, (_, i) => `-${(15 - i) * 5}s`),
+      labels: { style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace' } },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      max: 100,
+      labels: { 
+        style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace' },
+        formatter: (val) => val.toFixed(0) + '%'
+      }
+    },
+    tooltip: { theme: 'dark', x: { show: true }, y: { formatter: (val) => val.toFixed(1) + ' % load' } }
   }
-  return d
-}
+})
 
-// Line chart simulation data for Revenue & Network
-const generatePoints = () => {
-  return Array.from({ length: 15 }, (_, i) => ({
-    x: (i / 14) * 100,
-    y: 30 + Math.random() * 50 // y is 0-100 down from top
-  }))
-}
+// 2. Revenue Flow Chart Options
+const revenueSeries = ref([{
+  name: 'Revenue flow',
+  data: Array.from({ length: 15 }, () => Math.floor(Math.random() * 200000) + 200000)
+}])
 
-const revenuePoints = ref(generatePoints())
-const networkPoints = ref(generatePoints())
+const revenueChartOptions = ref({
+  chart: {
+    id: 'revenue-monitor',
+    animations: { enabled: true, easing: 'smooth', speed: 800 },
+    toolbar: { show: false },
+    background: 'transparent'
+  },
+  theme: { mode: 'dark' },
+  stroke: { curve: 'monotoneCubic', width: 2, colors: ['#10b981'] },
+  fill: {
+    type: 'gradient',
+    gradient: {
+      shadeIntensity: 1,
+      opacityFrom: 0.45,
+      opacityTo: 0.05,
+      stops: [20, 100],
+      colorStops: [
+        { offset: 0, color: '#10b981', opacity: 0.4 },
+        { offset: 100, color: '#10b981', opacity: 0 }
+      ]
+    }
+  },
+  dataLabels: { enabled: false },
+  grid: { borderColor: '#334155', strokeDashArray: 4 },
+  xaxis: {
+    categories: Array.from({ length: 15 }, (_, i) => `${i}:00`),
+    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace' } },
+    axisBorder: { show: false }
+  },
+  yaxis: {
+    labels: { 
+      style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace' },
+      formatter: (val) => '฿' + (val / 1000).toFixed(0) + 'k'
+    }
+  },
+  tooltip: { theme: 'dark', y: { formatter: (val) => '฿' + val.toLocaleString() } }
+})
 
-const revenueLinePath = computed(() => createLinePath(revenuePoints.value))
-const revenueAreaPath = computed(() => `${revenueLinePath.value} L 100 100 L 0 100 Z`)
-
-const networkLinePath = computed(() => createLinePath(networkPoints.value))
-const networkAreaPath = computed(() => `${networkLinePath.value} L 100 100 L 0 100 Z`)
-
+// ── UTILS ─────────────────────────────────────────────────────────────────────
 const formatNumber = (val) => {
-  return val.toLocaleString('en-US')
+  return val ? val.toLocaleString('en-US') : '0'
 }
 
-// Live simulation loop for IT Ops / Bank Ticker
-let simulationInterval = null
+// ── LOCAL CHART HEARTBEAT (Numbers sync globally, charts animate locally) ──
+let chartTimer = null
 
 onMounted(() => {
-  simulationInterval = setInterval(() => {
-    // Fluctuations
-    networkTraffic.value = parseFloat((12 + (Math.random() * 1.5 - 0.75)).toFixed(2))
-    transactions.value += Math.floor(Math.random() * 50 - 25)
-    if(transactions.value < 2000) transactions.value = 4500
-    
-    liveRevenue.value += Math.floor(Math.random() * 2500)
-    totalRevenue.value += Math.floor(Math.random() * 2500)
-    
-    // Shift Revenue Line
-    const revPts = [...revenuePoints.value]
-    for(let i = 0; i < revPts.length - 1; i++) { revPts[i].y = revPts[i+1].y }
-    revPts[revPts.length - 1].y = 30 + Math.random() * 50
-    revenuePoints.value = revPts
+  chartTimer = setInterval(() => {
+    // Update Network Series
+    const newNetData = [...networkSeries.value[0].data]
+    newNetData.shift()
+    newNetData.push(Math.floor(Math.random() * 40) + 20)
+    networkSeries.value = [{ name: 'System Load', data: newNetData }]
 
-    // Shift Network Line
-    const netPts = [...networkPoints.value]
-    for(let i = 0; i < netPts.length - 1; i++) { netPts[i].y = netPts[i+1].y }
-    netPts[netPts.length - 1].y = 20 + Math.random() * 70
-    networkPoints.value = netPts
-
+    // Update Revenue Series
+    const newRevData = [...revenueSeries.value[0].data]
+    newRevData.shift()
+    newRevData.push(Math.floor(Math.random() * 200000) + 200000)
+    revenueSeries.value = [{ name: 'Revenue flow', data: newRevData }]
   }, 3000)
 })
 
 onUnmounted(() => {
-  if (simulationInterval) clearInterval(simulationInterval)
+  if (chartTimer) clearInterval(chartTimer)
 })
 </script>
 
@@ -356,14 +368,12 @@ onUnmounted(() => {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Custom shadow/glow for charts */
+.apexcharts-canvas {
+  filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.1));
 }
 </style>

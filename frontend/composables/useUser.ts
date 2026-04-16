@@ -1,10 +1,10 @@
 export const DEFAULTS = {
   user: {
     id: '',
-    name: 'System Admin',
-    email: 'admin@optisight.corp',
-    role: 'admin',
-    avatar: 'https://api.dicebear.com/9.x/notionists/svg?seed=Admin',
+    name: 'Guest User',
+    email: '',
+    role: 'guest',
+    avatar: 'https://api.dicebear.com/9.x/notionists/svg?seed=Guest'
   },
   settings: {
     thresholds: [
@@ -16,26 +16,54 @@ export const DEFAULTS = {
       { name: 'Email Notifications (Primary)', enabled: true },
       { name: 'Slack Integration', enabled: true },
       { name: 'System Webhook', enabled: false },
-    ],
-  },
+    ]
+  }
 }
 
 export const useUser = () => {
+  const config = useRuntimeConfig()
   const user = useState('user-profile', () => ({ ...DEFAULTS.user }))
   const settings = useState('system-settings', () => JSON.parse(JSON.stringify(DEFAULTS.settings)))
+  const token = useCookie('optisight_token')
+  const status = useState('auth-status', () => !!token.value)
 
-  // ── Token cookie (SSR-safe) ───────────────────────────────────────────────
-  const tokenCookie = useCookie<string | null>('optisight_token', {
-    maxAge: 60 * 60 * 24,
-    sameSite: 'lax',
-    secure: false,
-  })
+  const login = (newToken: string, userData: any) => {
+    token.value = newToken
+    user.value = { 
+      ...userData, 
+      avatar: userData.avatar || `https://api.dicebear.com/9.x/notionists/svg?seed=${userData.name}`
+    }
+    status.value = true
+  }
 
-  const isAuthenticated = computed(() => !!tokenCookie.value)
+  const logout = () => {
+    token.value = null
+    user.value = { ...DEFAULTS.user }
+    status.value = false
+    navigateTo('/login')
+  }
 
-  const getToken = () => tokenCookie.value
+  const fetchMe = async () => {
+    if (!token.value) return
+    
+    try {
+      const data: any = await $fetch(`${config.public.apiBase}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token.value}` }
+      })
+      if (data?.user) {
+        user.value = {
+          ...data.user,
+          avatar: `https://api.dicebear.com/9.x/notionists/svg?seed=${data.user.name}`
+        }
+        status.value = true
+      }
+    } catch (err) {
+      console.error('Session restoration failed', err)
+      logout()
+    }
+  }
 
-  const updateProfile = (newData: Partial<typeof DEFAULTS.user>) => {
+  const updateProfile = (newData: any) => {
     user.value = { ...user.value, ...newData }
   }
 
@@ -43,29 +71,15 @@ export const useUser = () => {
     settings.value = { ...settings.value, ...newSettings }
   }
 
-  // ── Logout: clear cookie and reset state ─────────────────────────────────
-  const logout = async () => {
-    const config = useRuntimeConfig()
-    try {
-      await $fetch(`${config.public.apiBase}/api/auth/logout`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tokenCookie.value}` },
-      })
-    } catch {
-      // Swallow error - still clear session locally
-    }
-    tokenCookie.value = null
-    user.value = { ...DEFAULTS.user }
-    await navigateTo('/login')
-  }
-
   return {
     user,
     settings,
-    isAuthenticated,
-    getToken,
-    updateProfile,
-    updateSettings,
+    token,
+    status,
+    login,
     logout,
+    fetchMe,
+    updateProfile,
+    updateSettings
   }
 }

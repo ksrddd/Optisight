@@ -1,5 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-950">
+    <NuxtLoadingIndicator color="#6366f1" :height="3" />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
@@ -8,9 +9,27 @@
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, onMounted, onUnmounted } from 'vue'
 
+const { fetchMe } = useUser()
+const { updateSimulation: syncSystem } = useSystemState()
 const toastRef = ref(null)
+
+let timer = null
+
+onMounted(() => {
+  // Session recovery
+  fetchMe()
+  
+  // Global System Heartbeat (3s)
+  timer = setInterval(() => {
+    syncSystem()
+  }, 3000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 
 // Provide a global way to add toasts
 provide('toast', {

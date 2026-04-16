@@ -7,13 +7,9 @@
     </div>
 
     <div class="w-full max-w-md relative z-10 animate-fade-in">
-      <!-- Logo -->
       <div class="flex flex-col items-center mb-10">
-        <div
-          class="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center shadow-2xl shadow-indigo-500/40 mb-4">
-          <Activity class="w-10 h-10 text-white" />
-        </div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">Access Request</h1>
+        <img src="/logo.png" alt="OptiSight" class="h-16 w-16 object-contain mb-4" />
+        <h1 class="text-3xl font-bold text-sky-400 tracking-tight">Access Request</h1>
         <p class="text-slate-400 mt-2 text-center">Initialize your profile to begin system monitoring.</p>
       </div>
 

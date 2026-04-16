@@ -12,9 +12,10 @@
       <div class="glass-card p-8 border border-white/5 bg-white/5 flex flex-col rounded-[2rem] hover:border-indigo-500/30 transition-all duration-300 relative group">
         <div class="mb-6">
           <h2 class="text-2xl font-semibold text-white mb-2">Starter</h2>
-          <div class="flex items-baseline gap-2">
+          <div class="flex items-baseline gap-1">
+            <span class="text-slate-400 text-lg font-medium mr-1">฿</span>
             <span class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-200">2,000</span>
-            <span class="text-slate-400">บาท/เดือน</span>
+            <span class="text-slate-400 ml-1">/เดือน</span>
           </div>
           <p class="text-slate-400 text-sm mt-3 leading-relaxed">Essential monitoring for small teams and startups starting out.</p>
         </div>
@@ -56,9 +57,10 @@
         </div>
         <div class="mb-6 mt-2">
           <h2 class="text-2xl font-semibold text-white mb-2">Pro</h2>
-          <div class="flex items-baseline gap-2">
+          <div class="flex items-baseline gap-1">
+            <span class="text-slate-400 text-lg font-medium mr-1">฿</span>
             <span class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-sky-400">5,000</span>
-            <span class="text-slate-400">บาท/เดือน</span>
+            <span class="text-slate-400 ml-1">/เดือน</span>
           </div>
           <p class="text-slate-400 text-sm mt-3 leading-relaxed">Advanced features for growing organizations requiring deeper insights.</p>
         </div>
@@ -101,9 +103,10 @@
       <div class="glass-card p-8 border border-white/5 bg-white/5 flex flex-col rounded-[2rem] hover:border-indigo-500/30 transition-all duration-300 relative group">
         <div class="mb-6">
           <h2 class="text-2xl font-semibold text-white mb-2">Enterprise</h2>
-          <div class="flex items-baseline gap-2">
+          <div class="flex items-baseline gap-1">
+            <span class="text-slate-400 text-lg font-medium mr-1">฿</span>
             <span class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-200">15,000+</span>
-            <span class="text-slate-400">บาท/เดือน</span>
+            <span class="text-slate-400 ml-1">/เดือน</span>
           </div>
           <p class="text-slate-400 text-sm mt-3 leading-relaxed">Custom solutions and scale for large-scale enterprise operations.</p>
         </div>
