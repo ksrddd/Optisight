@@ -7,7 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
     "build": "npx prisma generate && tsc",
-    "start": "node dist/src/index.js"
+    "start": "node dist/src/index.js",
+    "db:migrate": "npx prisma migrate deploy",
+    "db:push": "npx prisma db push",
+    "db:seed": "npx ts-node prisma/seed.ts",
+    "db:studio": "npx prisma studio"
   },
   "keywords": [],
   "author": "",
@@ -37,5 +41,8 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.2"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
