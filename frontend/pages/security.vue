@@ -1,123 +1,279 @@
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">SOC Security Metrics</h1>
-        <p class="text-slate-400 mt-1">Real-time threat detection and access control monitoring.</p>
+  <div class="flex h-full min-h-0 flex-col bg-surface-base">
+    <!-- Page head -------------------------------------------------------- -->
+    <div class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-3">
+      <div class="min-w-0">
+        <h1 class="truncate text-lg font-semibold tracking-[-0.02em] text-ink-primary">
+          Security Operations
+        </h1>
+        <p class="truncate text-xs text-ink-muted">
+          {{ activeEnv.label }} ·
+          <span class="font-mono">{{ activeEnv.id }}</span> ·
+          {{ stream.retained.value.toLocaleString() }} events in buffer
+        </p>
       </div>
-    </div>
 
-    <!-- Stats row for SOC -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="glass-card p-6 border border-rose-500/30 relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-500/20 blur-2xl rounded-full"></div>
-        <h3 class="text-sm font-medium text-slate-400">Hacking Attempts Blocked</h3>
-        <p class="text-3xl font-bold text-white mt-1">452</p>
-        <span class="text-xs text-rose-400 mt-2 flex items-center gap-1"><TrendingUp class="w-3 h-3"/> +24% today</span>
-      </div>
-      <div class="glass-card p-6 border border-amber-500/30 relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/20 blur-2xl rounded-full"></div>
-        <h3 class="text-sm font-medium text-slate-400">Active Vulnerability Risks</h3>
-        <p class="text-3xl font-bold text-white mt-1">12</p>
-        <span class="text-xs text-amber-400 mt-2 block">Pending patch deploy</span>
-      </div>
-      <div class="glass-card p-6 border border-emerald-500/30 relative overflow-hidden">
-        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/20 blur-2xl rounded-full"></div>
-        <h3 class="text-sm font-medium text-slate-400">IAM Auth Sessions</h3>
-        <p class="text-3xl font-bold text-white mt-1">14,204</p>
-        <span class="text-xs text-emerald-400 mt-2 block">Normal load</span>
-      </div>
-    </div>
+      <div class="flex shrink-0 items-center gap-2">
+        <!-- Time range. Segmented, because the options are few and comparison
+             between them is the point. -->
+        <div class="hidden items-center rounded border border-line md:flex" role="group" aria-label="Time range">
+          <button
+            v-for="r in ranges"
+            :key="r.key"
+            class="h-7 px-2.5 text-xs font-medium transition-colors duration-fast first:rounded-l last:rounded-r"
+            :class="range === r.key ? 'bg-surface-hover text-ink-primary' : 'text-ink-muted hover:text-ink-primary'"
+            :aria-pressed="range === r.key"
+            @click="range = r.key"
+          >
+            {{ r.label }}
+          </button>
+        </div>
 
-    <!-- Security Logs Table -->
-    <div class="glass rounded-2xl border border-slate-700/50 overflow-hidden">
-      <div class="px-6 py-5 border-b border-white/5 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-white">Live Threat Intelligence Feed</h2>
-        <button @click="toast.add('Filter Applied', 'Viewing critical threats only.', 'info')"
-          class="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-          Filter Critical
+        <button class="btn" :aria-pressed="!stream.streaming.value" @click="toggleStream">
+          <component :is="stream.streaming.value ? Pause : Play" class="h-3.5 w-3.5" aria-hidden="true" />
+          <span class="hidden sm:inline">{{ stream.streaming.value ? 'Pause' : 'Resume' }}</span>
         </button>
-      </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr
-              class="bg-slate-900/40 text-xs uppercase tracking-wider text-slate-400 font-semibold border-b border-white/5">
-              <th class="px-6 py-4">Threat Event</th>
-              <th class="px-6 py-4">Target Node</th>
-              <th class="px-6 py-4">Source IP</th>
-              <th class="px-6 py-4">SOC Action</th>
-              <th class="px-6 py-4">Time</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            <tr v-if="pending">
-              <td colspan="5" class="px-6 py-8 text-center text-slate-500">Loading intelligence feed...</td>
-            </tr>
-            <tr v-else v-for="(event, idx) in events" :key="idx" class="hover:bg-white/5 transition-colors">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <ShieldAlert class="w-4 h-4 text-rose-400" v-if="event.status === 'Blocked'" />
-                  <Search class="w-4 h-4 text-amber-400" v-else-if="event.status === 'Investigating'" />
-                  <span class="font-medium text-slate-200">{{ event.event }}</span>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-400">{{ event.node }}</td>
-              <td class="px-6 py-4 text-sm font-mono text-slate-500">{{ event.ip }}</td>
-              <td class="px-6 py-4">
-                <span class="px-2.5 py-1 text-xs font-medium rounded-full border"
-                  :class="event.status === 'Blocked' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'">
-                  {{ event.status }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-slate-400">{{ event.time }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <NuxtLink to="/reports" class="btn">
+          <FileDown class="h-3.5 w-3.5" aria-hidden="true" />
+          <span class="hidden sm:inline">Export</span>
+        </NuxtLink>
       </div>
     </div>
+
+    <!-- KPI strip. Deliberately unequal: the metric that triggers action gets
+         more room than the ones that provide context. -->
+    <!--
+      On a phone the queue is what matters, so the KPI strip becomes a single
+      swipeable row rather than four stacked cards; stacking them consumed
+      almost half the viewport and left two rows of feed visible.
+    -->
+    <div
+      class="flex shrink-0 snap-x snap-mandatory overflow-x-auto border-b border-line
+             sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible
+             xl:grid-cols-[1.05fr_1.35fr_1fr_1fr]"
+    >
+      <KpiCard
+        label="Active critical incidents"
+        :value="stream.openCritical.value"
+        :series="stream.criticalSeries.value"
+        :severity="stream.openCritical.value > 0 ? 'critical' : 'low'"
+        :delta="criticalDelta.text"
+        :direction="criticalDelta.direction"
+        :tone="criticalDelta.direction === 'up' ? 'bad' : 'good'"
+        delta-note="unresolved, last 15m"
+        :badge="stream.openCritical.value > 0 ? 'ACTION REQ' : 'CLEAR'"
+      />
+
+      <KpiCard
+        label="Threat level"
+        :value="stream.threatLabel.value"
+        :severity="stream.threatSeverity.value"
+        :delta="`${stream.threatScore.value}/100`"
+        direction="flat"
+        delta-note="composite index"
+      >
+        <template #viz>
+          <SeverityMixBar :counts="stream.recentMix.value" />
+        </template>
+      </KpiCard>
+
+      <KpiCard
+        label="Mean time to detect"
+        :value="mttdText"
+        :series="stream.mttdSeries.value"
+        :delta="mttdDelta.text"
+        :direction="mttdDelta.direction"
+        :tone="mttdDelta.direction === 'up' ? 'bad' : 'good'"
+        delta-note="vs shift average"
+      />
+
+      <KpiCard
+        label="Bandwidth anomaly"
+        :value="stream.bandwidth.value.toFixed(1)"
+        unit="σ"
+        :series="stream.bandwidthSeries.value"
+        :severity="bandwidthSeverity"
+        :delta="bwDelta.text"
+        :direction="bwDelta.direction"
+        :tone="bwDelta.direction === 'up' ? 'bad' : 'good'"
+        delta-note="egress baseline"
+      />
+    </div>
+
+    <!-- Filters ---------------------------------------------------------- -->
+    <FilterBar
+      v-model="filters"
+      :counts="stream.severityCounts.value"
+      :matched="filtered.length"
+      :total="stream.events.value.length"
+    />
+
+    <!-- Feed + attack surface -------------------------------------------- -->
+    <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <ThreatFeed
+        ref="feedRef"
+        :rows="filtered"
+        :retained="stream.retained.value"
+        :capacity="stream.capacity"
+        class="min-h-0 flex-1"
+        @open="openIncident"
+      />
+
+      <AttackSurface
+        :recent="stream.recent.value"
+        :by-service="stream.byService.value"
+        class="max-h-[46%] shrink-0 lg:max-h-none"
+      />
+    </div>
+
+    <!-- Slide-over. Mounted only on demand, so the payload viewer, hexdump and
+         MITRE panel never enter the initial bundle. -->
+    <IncidentDrawer
+      v-if="selected"
+      :incident="selected"
+      @close="closeIncident"
+      @action="handleAction"
+    />
   </div>
 </template>
 
 <script setup>
-import { ShieldAlert, Search, TrendingUp } from 'lucide-vue-next'
-import { ref, onMounted, inject } from 'vue'
+import { ref, computed, watch, defineAsyncComponent, inject, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { Pause, Play, FileDown } from 'lucide-vue-next'
+import KpiCard from '~/components/soc/KpiCard.vue'
+import SeverityMixBar from '~/components/soc/SeverityMixBar.vue'
+import FilterBar from '~/components/soc/FilterBar.vue'
+import ThreatFeed from '~/components/soc/ThreatFeed.vue'
+import AttackSurface from '~/components/soc/AttackSurface.vue'
 
-const toast = inject('toast')
-const config = useRuntimeConfig()
-const { data: rawEvents, pending } = await useFetch(`${config.public.apiBase}/api/security`, { server: false })
-const events = ref([])
+// Lazy: the drawer pulls in the hexdump renderer and MITRE matrix, none of
+// which is needed until an analyst actually opens an incident.
+const IncidentDrawer = defineAsyncComponent(() => import('~/components/soc/IncidentDrawer.vue'))
 
+definePageMeta({ dense: true })
+
+useHead({ title: 'Security Operations | OptiSight' })
+
+const route = useRoute()
+const toast = inject('toast', { add: () => {} })
+const activeEnv = useState('active-env', () => ({ id: 'prod-apac-1', label: 'Production · Singapore' }))
+const health = useState('stream-health', () => ({ connected: false, latencyMs: 0, ingestRate: 0, source: 'local' }))
+
+const stream = useThreatStream()
+const feedRef = ref(null)
+
+// Publish the live queue depth to the sidebar badge.
+const navCritical = useState('soc-open-critical', () => 0)
+watch(stream.openCritical, (n) => (navCritical.value = n), { immediate: true })
+
+// Publish stream health to the command bar without coupling the two.
+watch(
+  [stream.connected, stream.latencyMs, stream.ingestRate, stream.source],
+  ([connected, latencyMs, ingestRate, source]) => {
+    health.value = { connected, latencyMs, ingestRate, source }
+  },
+  { immediate: true }
+)
+
+// --- Filters --------------------------------------------------------------
+const filters = ref({ severities: [], statuses: [], query: '' })
+
+const ranges = [
+  { key: '15m', label: '15m', ms: 900_000 },
+  { key: '1h', label: '1h', ms: 3_600_000 },
+  { key: '4h', label: '4h', ms: 14_400_000 }
+]
+const range = ref('1h')
+const rangeMs = computed(() => ranges.find((r) => r.key === range.value)?.ms ?? 3_600_000)
+
+// Seed filters from the URL so command-palette views and shared links land on
+// the same queue the sender was looking at.
 onMounted(() => {
-  if (rawEvents.value && Array.isArray(rawEvents.value) && rawEvents.value.length > 0) {
-    events.value = [...rawEvents.value]
-  } else {
-    events.value = [
-      { event: 'DDoS Amplification Attempt', node: 'API Gateway (APAC)', ip: '112.143.22.10', status: 'Blocked', time: '1m ago' },
-      { event: 'Brute Force Login (Auth DB)', node: 'Auth DB Master', ip: '45.88.92.1', status: 'Blocked', time: '5m ago' },
-      { event: 'Abnormal Query Pattern', node: 'Customer Data Subnet', ip: '10.0.4.52', status: 'Investigating', time: '12m ago' },
-      { event: 'Unauthorized Port Scan', node: 'Internal VPN Gateway', ip: '192.168.1.100', status: 'Blocked', time: '20m ago' }
-    ]
+  const sev = String(route.query.sev ?? '')
+    .split(',')
+    .filter(Boolean)
+  const status = String(route.query.status ?? '')
+    .split(',')
+    .filter(Boolean)
+  if (sev.length || status.length) {
+    filters.value = { severities: sev, statuses: status, query: '' }
   }
 })
+
+const filtered = computed(() => {
+  const { severities, statuses, query } = filters.value
+  const q = query.trim().toLowerCase()
+  const cutoff = Date.now() - rangeMs.value
+
+  return stream.events.value.filter((e) => {
+    if (e.ts < cutoff) return false
+    if (severities.length && !severities.includes(e.severity)) return false
+    if (statuses.length && !statuses.includes(e.status)) return false
+    if (q) {
+      const hay = `${e.type} ${e.asset} ${e.service} ${e.srcIp} ${e.id} ${e.technique.id}`.toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+})
+
+// --- Derived KPI presentation --------------------------------------------
+const trend = (series, lowerIsBetter = false) => {
+  if (series.length < 2) return { text: '0%', direction: 'flat' }
+  const head = series.slice(0, Math.floor(series.length / 2))
+  const tail = series.slice(Math.floor(series.length / 2))
+  const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length
+  const before = avg(head)
+  const after = avg(tail)
+  if (before === 0) return { text: '—', direction: 'flat' }
+  const pct = ((after - before) / before) * 100
+  const direction = Math.abs(pct) < 1.5 ? 'flat' : pct > 0 ? 'up' : 'down'
+  return { text: `${pct > 0 ? '+' : ''}${pct.toFixed(0)}%`, direction, lowerIsBetter }
+}
+
+const criticalDelta = computed(() => trend(stream.criticalSeries.value))
+const mttdDelta = computed(() => trend(stream.mttdSeries.value))
+const bwDelta = computed(() => trend(stream.bandwidthSeries.value))
+
+const mttdText = computed(() => {
+  const s = Math.round(stream.mttd.value)
+  return s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s` : `${s}s`
+})
+
+const bandwidthSeverity = computed(() => {
+  const b = stream.bandwidth.value
+  return b >= 5 ? 'critical' : b >= 3 ? 'high' : b >= 1.5 ? 'medium' : 'low'
+})
+
+// --- Incident triage ------------------------------------------------------
+const selected = ref(null)
+
+const openIncident = (incident) => {
+  selected.value = incident
+}
+
+const closeIncident = () => {
+  selected.value = null
+}
+
+// The drawer animates itself out and then emits `close`, so this only records
+// the outcome — clearing `selected` here would cut the exit short.
+const handleAction = ({ kind, incident }) => {
+  if (kind === 'isolate') {
+    stream.patch(incident.id, { status: 'contained' })
+    toast.add('Host isolated', `${incident.asset} removed from the network.`, 'success')
+  } else if (kind === 'block') {
+    stream.patch(incident.id, { status: 'contained', action: 'blocked' })
+    toast.add('Source blocked', `${incident.srcIp} added to the edge deny list.`, 'success')
+  } else {
+    stream.patch(incident.id, { status: 'dismissed' })
+    toast.add('Incident dismissed', `${incident.id} marked as benign.`, 'info')
+  }
+}
+
+const toggleStream = () => {
+  stream.streaming.value = !stream.streaming.value
+}
 </script>
-
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>

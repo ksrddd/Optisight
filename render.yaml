@@ -1,0 +1,21 @@
+# Render Blueprint — OptiSight API (Express + socket.io).
+# The frontend is deployed separately on Vercel.
+services:
+  - type: web
+    name: optisight-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    # NODE_ENV=production makes npm skip devDependencies, but tsc and the
+    # @types packages are needed to build.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npx prisma db push --skip-generate && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://optisight.vercel.app

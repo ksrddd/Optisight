@@ -7,15 +7,23 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   app: {
     head: {
-      title: 'Optisight | Business Intelligence & Security Hub',
+      title: 'OptiSight | Security Operations',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'Centralized infrastructure and security monitoring platform for modern enterprises.' },
-        { name: 'theme-color', content: '#0f172a' }
+        { name: 'theme-color', content: '#09090b' },
+        { name: 'color-scheme', content: 'dark' }
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'stylesheet',
+          // Inter for UI text, JetBrains Mono for machine-readable values.
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap'
+        }
       ]
     }
   },

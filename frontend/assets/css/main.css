@@ -2,55 +2,232 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+   OptiSight console tokens
+   One law governs colour on this surface: hue means severity, nothing else.
+   Structure, state and interaction are carried by neutral value steps, so a
+   red pixel anywhere on screen is always an operational fact.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --surface-base: #09090b;
+  --surface-raised: #0e0e11;
+  --surface-panel: #121216;
+  --surface-overlay: #17171c;
+  --surface-hover: #1f1f25;
+
+  --line-faint: #1c1c1f;
+  --line: #27272a;
+  --line-strong: #3f3f46;
+
+  --ink-primary: #fafafa;
+  --ink-secondary: #a1a1aa;
+  --ink-muted: #8a8a93;
+  --ink-faint: #5c5c66;
+
+  --sev-critical: #ef4444;
+  --sev-high: #f59e0b;
+  --sev-medium: #eab308;
+  --sev-low: #10b981;
+  --sev-info: #8a8a93;
+
+  /* Every interactive transition on this surface resolves inside 150ms. */
+  --t-fast: 80ms;
+  --t-base: 120ms;
+  --t-slow: 150ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --row-h: 32px;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-base text-ink-primary font-sans antialiased;
+    font-size: 13px;
+    line-height: 20px;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Machine-readable values: fixed advance width so an analyst can compare
+     addresses and hashes character by character down a column. */
+  code,
+  kbd,
+  samp,
+  pre,
+  .tabular {
+    @apply font-mono;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'zero' 1, 'ss02' 1;
+  }
+
+  /* Focus is neutral and bright by design. A coloured focus ring would read as
+     a severity signal on this surface. */
+  :focus-visible {
+    outline: 2px solid var(--ink-primary);
+    outline-offset: 1px;
+    border-radius: 3px;
+  }
+
+  ::selection {
+    background: rgba(250, 250, 250, 0.16);
+  }
+}
+
+@layer components {
+  /* A panel is a 1px line and a value step. No blur, no shadow, no glow. */
+  .panel {
+    @apply bg-surface-raised border border-line;
+  }
+
+  .panel-header {
+    @apply flex items-center justify-between h-9 px-3 border-b border-line shrink-0;
+  }
+
+  .panel-title {
+    @apply text-2xs font-semibold uppercase tracking-[0.08em] text-ink-muted;
+  }
+
+  /* Field label used above dense key/value pairs. */
+  .field-label {
+    @apply text-2xs font-medium uppercase tracking-[0.08em] text-ink-muted;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 h-7 px-2.5 rounded text-xs font-medium
+           border border-line bg-surface-panel text-ink-secondary
+           transition-colors duration-fast ease-out
+           hover:bg-surface-hover hover:text-ink-primary hover:border-line-strong
+           disabled:opacity-40 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-ink-primary text-surface-base border-ink-primary font-semibold
+           hover:bg-white hover:text-surface-base hover:border-white;
+  }
+
+  .btn-danger {
+    @apply text-sev-critical border-sev-critical/40 bg-sev-critical/[0.07]
+           hover:bg-sev-critical/15 hover:text-sev-critical hover:border-sev-critical/70;
+  }
+
+  .input {
+    @apply h-7 w-full rounded bg-surface-input border border-line px-2 text-xs text-ink-primary
+           placeholder:text-ink-faint transition-colors duration-fast
+           focus:border-line-strong focus:outline-none focus-visible:outline-none;
+  }
+
+  /* Toggleable filter chip. Selected state is a value step, not a hue. */
+  .chip {
+    @apply inline-flex items-center gap-1.5 h-6 px-2 rounded border text-xs font-medium
+           border-line bg-transparent text-ink-muted
+           transition-colors duration-fast ease-out
+           hover:text-ink-primary hover:border-line-strong;
+  }
+
+  .chip-on {
+    @apply bg-surface-hover text-ink-primary border-line-strong;
+  }
+
+  .kbd {
+    @apply inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-[3px]
+           border border-line bg-surface-panel font-mono text-2xs text-ink-muted;
+  }
+
+  /* Threshold slider. Native range controls carry the OS accent colour, which
+     would introduce a hue this surface has no meaning for. */
+  .range {
+    @apply h-1 w-full cursor-pointer appearance-none rounded-full bg-line-strong;
+  }
+
+  .range::-webkit-slider-thumb {
+    @apply h-3 w-3 appearance-none rounded-full border-0 bg-ink-primary;
+    transition: transform var(--t-fast) var(--ease-out);
+  }
+
+  .range::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  .range::-moz-range-thumb {
+    @apply h-3 w-3 rounded-full border-0 bg-ink-primary;
+  }
+
+  .range::-moz-range-track {
+    @apply h-1 rounded-full bg-line-strong;
+  }
+}
+
 @layer utilities {
-  .glass {
-    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-lg;
+  /* Hairline grid rules used by the feed and heat matrix. */
+  .rule-b {
+    box-shadow: inset 0 -1px 0 var(--line-faint);
   }
-  .glass-dark {
-    @apply bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 shadow-xl;
+
+  .rule-r {
+    box-shadow: inset -1px 0 0 var(--line-faint);
   }
-  .glass-card {
-    @apply bg-slate-900/40 backdrop-blur-lg border border-slate-700/50 shadow-lg rounded-2xl;
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
   }
 }
 
-body {
-  @apply bg-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-indigo-500/30;
-  background-image:
-    radial-gradient(
-      circle at top right,
-      rgba(67, 56, 202, 0.15),
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at bottom left,
-      rgba(14, 165, 233, 0.1),
-      transparent 40%
-    );
-  background-attachment: fixed;
-}
-
-/* Custom Scrollbar */
+/* Scrollbars sit inside the console, not on top of it. */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
+
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--surface-base);
 }
+
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-700 rounded-full;
+  background: #2e2e33;
+  border: 3px solid var(--surface-base);
+  border-radius: 6px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-600;
+  background: #45454c;
 }
+
+::-webkit-scrollbar-corner {
+  background: var(--surface-base);
+}
+
+/* --- Motion -------------------------------------------------------------- */
 
 .page-enter-active,
 .page-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity var(--t-slow) var(--ease-out);
 }
+
 .page-enter-from,
 .page-leave-to {
   opacity: 0;
-  transform: translateY(10px);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The legacy glassmorphism utilities (.glass, .glass-dark, .glass-card) were
+   removed once every route migrated to the console world above. All twelve
+   routes now share one design system — see docs/01-DESIGN-DIRECTION.md. */

@@ -1,299 +1,158 @@
 <template>
-  <div class="space-y-8 animate-fade-in pb-12">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">Executive Reporting Hub</h1>
-        <p class="text-slate-400 mt-1">Audit security posture and financial performance across specific intervals.</p>
+  <div class="space-y-4">
+    <!-- Page head -->
+    <div class="flex flex-col gap-3 border-b border-line pb-4 md:flex-row md:items-end md:justify-between">
+      <div class="min-w-0">
+        <h1 class="flex items-center gap-2 text-xl font-semibold tracking-[-0.02em] text-ink-primary">
+          Reports
+          <DemoBadge />
+        </h1>
+        <p class="mt-0.5 text-xs text-ink-muted">Weekly posture summaries for security and operations review.</p>
       </div>
     </div>
 
-    <!-- Dual Report Sections -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-
-      <!-- ── SECTION 1: SECURITY AUDIT ── -->
-      <div class="space-y-6 flex flex-col">
-        <div
-          class="glass-card p-8 border border-slate-700/50 flex-1 flex flex-col bg-rose-500/5 hover:border-rose-500/30 transition-all duration-500">
-          <div class="flex items-center gap-4 mb-8">
-            <div
-              class="h-12 w-12 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400 shadow-lg shadow-rose-500/10">
-              <ShieldAlert class="w-6 h-6" />
-            </div>
-            <div>
-              <h2 class="text-xl font-bold text-white">Security Operations</h2>
-              <p class="text-[10px] font-bold text-rose-400/80 uppercase tracking-widest">Incident & Threat Intelligence
-              </p>
-            </div>
-          </div>
-
-          <div class="space-y-8 flex-1">
-            <!-- Time Range (Security) -->
-            <div class="space-y-3">
-              <label class="block text-sm font-medium text-slate-400">Audit Period</label>
-              <div class="flex flex-wrap gap-2">
-                <button v-for="range in ranges" :key="'sec-' + range" @click="securityRange = range"
-                  :class="securityRange === range ? 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20' : 'bg-slate-900/50 text-slate-400 border-slate-700/50 hover:bg-white/5'"
-                  class="px-5 py-2.5 text-xs font-bold rounded-xl border transition-all uppercase tracking-wider">
-                  {{ range }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Detailed Security Metrics -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="metric in detailedSecurity" :key="metric.label"
-                class="p-4 rounded-xl bg-slate-900/40 border border-white/5">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">{{ metric.label }}</p>
-                <div class="flex items-end justify-between">
-                  <span class="text-lg font-bold text-white">{{ metric.value }}</span>
-                  <span :class="metric.trend > 0 ? 'text-rose-400' : 'text-emerald-400'"
-                    class="text-[10px] flex items-center gap-1">
-                    {{ metric.trend > 0 ? '↑' : '↓' }} {{ Math.abs(metric.trend) }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Security Focus Intensity -->
-            <div class="space-y-3">
-              <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Threat Intensity Breakdown</p>
-              <div class="space-y-3">
-                <div v-for="opt in securityOptions" :key="opt.name"
-                  class="p-4 rounded-xl border border-white/5 bg-slate-900/40 flex items-center justify-between group">
-                  <div class="flex items-center gap-3">
-                    <component :is="opt.icon" class="w-4 h-4 text-rose-400/60" />
-                    <span class="text-sm text-slate-300 font-medium">{{ opt.name }}</span>
-                  </div>
-                  <div class="h-1.5 w-24 bg-slate-800 rounded-full overflow-hidden">
-                    <div class="h-full bg-rose-500" :style="{ width: opt.value + '%' }"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Action -->
-          <div class="mt-12 pt-8 border-t border-white/5">
-            <button @click="handleGenerate('security')" :disabled="isGenerating === 'security'"
-              class="w-full py-4 bg-rose-500/10 hover:bg-rose-500/20 active:scale-95 text-rose-400 rounded-xl font-bold text-xs transition-all border border-rose-500/20 flex items-center justify-center gap-2 group">
-              <Loader2 v-if="isGenerating === 'security'" class="w-4 h-4 animate-spin" />
-              <Download v-else class="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-              {{ isGenerating === 'security' ? 'ANALYZING INCIDENTS...' : 'GENERATE FULL SECURITY AUDIT' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Progress Overlay (Security) -->
-        <div v-if="isGenerating === 'security'" class="glass-card p-4 border border-rose-500/30 animate-pulse">
-          <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-            <div class="h-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)] transition-all duration-300"
-              :style="{ width: progress + '%' }"></div>
-          </div>
-        </div>
+    <!-- Controls: report type + period, plain English -->
+    <div class="flex flex-col gap-3 rounded-lg border border-line bg-surface-raised p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-1.5" role="tablist" aria-label="Report type">
+        <button
+          v-for="r in reportTypes"
+          :key="r.key"
+          role="tab"
+          :aria-selected="reportType === r.key"
+          class="chip h-7"
+          :class="reportType === r.key ? 'chip-on' : ''"
+          @click="reportType = r.key"
+        >
+          <component :is="r.icon" class="h-3.5 w-3.5" aria-hidden="true" />
+          {{ r.label }}
+        </button>
       </div>
 
-      <!-- ── SECTION 2: BUSINESS ROI ── -->
-      <div class="space-y-6 flex flex-col">
-        <div
-          class="glass-card p-8 border border-slate-700/50 flex-1 flex flex-col bg-sky-500/5 hover:border-sky-500/30 transition-all duration-500">
-          <div class="flex items-center gap-4 mb-8">
-            <div
-              class="h-12 w-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-400 shadow-lg shadow-sky-500/10">
-              <PiggyBank class="w-6 h-6" />
-            </div>
-            <div>
-              <h2 class="text-xl font-bold text-white">Business ROI</h2>
-              <p class="text-[10px] font-bold text-sky-400/80 uppercase tracking-widest">FinOps & Cost Optimization</p>
-            </div>
-          </div>
-
-          <div class="space-y-8 flex-1">
-            <!-- Time Range (ROI) -->
-            <div class="space-y-3">
-              <label class="block text-sm font-medium text-slate-400">Financial Period</label>
-              <div class="flex flex-wrap gap-2">
-                <button v-for="range in ranges" :key="'roi-' + range" @click="roiRange = range"
-                  :class="roiRange === range ? 'bg-sky-500 text-white border-sky-500 shadow-lg shadow-sky-500/20' : 'bg-slate-900/50 text-slate-400 border-slate-700/50 hover:bg-white/5'"
-                  class="px-5 py-2.5 text-xs font-bold rounded-xl border transition-all uppercase tracking-wider">
-                  {{ range }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Detailed ROI Metrics -->
-            <div class="p-6 bg-slate-900/60 rounded-2xl border border-white/5 space-y-6">
-              <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">ROI Performance
-                Analysis ({{ roiRange }})</h4>
-              <div class="grid grid-cols-3 gap-4">
-                <!-- Revenue -->
-                <div class="text-center space-y-1">
-                  <p class="text-[10px] text-slate-500 font-bold">รายได้</p>
-                  <p class="text-xl font-black text-white">฿1.24M</p>
-                  <span class="text-[9px] text-emerald-400 font-bold">+12.5%</span>
-                </div>
-                <!-- Profit -->
-                <div class="text-center space-y-1">
-                  <p class="text-[10px] text-emerald-400 font-bold">กำไร</p>
-                  <p class="text-xl font-black text-emerald-400">+฿450K</p>
-                  <span class="text-[9px] text-emerald-400 font-bold">+8.2%</span>
-                </div>
-                <!-- Loss -->
-                <div class="text-center space-y-1">
-                  <p class="text-[10px] text-rose-400 font-bold">ขาดทุน</p>
-                  <p class="text-xl font-black text-rose-400">-฿120K</p>
-                  <span class="text-[9px] text-rose-400 font-bold">+4.1%</span>
-                </div>
-              </div>
-
-              <!-- Additional Detail Table -->
-              <div class="pt-4 border-t border-white/5 space-y-2">
-                <div v-for="item in roiBreakdown" :key="item.label"
-                  class="flex justify-between items-center text-[11px]">
-                  <span class="text-slate-500">{{ item.label }}</span>
-                  <span class="text-slate-300 font-mono font-bold">{{ item.value }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Savings Estimation -->
-            <div class="p-4 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <TrendingUp class="w-5 h-5 text-sky-400" />
-                <div>
-                  <p class="text-xs font-bold text-white">Estimated Annual Savings</p>
-                  <p class="text-[10px] text-sky-300/70">Based on optimization trends</p>
-                </div>
-              </div>
-              <span class="text-sm font-black text-white">฿214,800</span>
-            </div>
-          </div>
-
-          <!-- Action -->
-          <div class="mt-12 pt-8 border-t border-white/5">
-            <button @click="handleGenerate('roi')" :disabled="isGenerating === 'roi'"
-              class="w-full py-4 bg-sky-500 hover:bg-sky-600 active:scale-95 text-white rounded-xl font-bold text-xs transition-all shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2 group">
-              <Loader2 v-if="isGenerating === 'roi'" class="w-4 h-4 animate-spin" />
-              <Download v-else class="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-              {{ isGenerating === 'roi' ? 'CALCULATING ROI...' : 'GENERATE FULL FINANCIAL ROI AUDIT' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Progress Overlay (ROI) -->
-        <div v-if="isGenerating === 'roi'" class="glass-card p-4 border border-sky-500/30 animate-pulse">
-          <div class="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-            <div class="h-full bg-sky-500 shadow-[0_0_10px_rgba(56,189,248,0.5)] transition-all duration-300"
-              :style="{ width: progress + '%' }"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Global Info Footer -->
-    <div class="glass-card p-6 border border-white/5 bg-white/5 flex items-center justify-between">
-      <div class="flex items-center gap-6">
-        <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-          <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
-          Status: All data nodes synchronized
-        </div>
-        <div class="h-4 w-px bg-white/10"></div>
-        <div class="text-xs text-slate-500">Reports are generated using real-time telemetry from NeonDB clusters.</div>
-      </div>
-      <div class="flex gap-4">
-        <span class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">v1.2.4-stable</span>
-        <span class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">System nodes 16/16 online</span>
+      <div class="flex items-center gap-1.5">
+        <span class="field-label">Period</span>
+        <button
+          v-for="p in periods"
+          :key="p.key"
+          class="chip h-7"
+          :class="period === p.key ? 'chip-on' : ''"
+          @click="period = p.key"
+        >
+          {{ p.label }}
+        </button>
       </div>
     </div>
+
+    <!-- Report body -->
+    <section class="panel rounded-lg">
+      <div class="panel-header">
+        <h2 class="panel-title">{{ activeReport.label }} · {{ activePeriod.label }}</h2>
+        <span class="font-mono text-2xs tabular-nums text-ink-muted">generated {{ generatedAt }}</span>
+      </div>
+
+      <!-- Metric grid -->
+      <div class="grid grid-cols-2 divide-x divide-y divide-line-faint sm:grid-cols-4">
+        <div v-for="m in metrics" :key="m.label" class="p-3">
+          <p class="field-label truncate">{{ m.label }}</p>
+          <p class="mt-1 flex items-baseline gap-1">
+            <span class="text-lg font-semibold tabular-nums" :class="m.tone || 'text-ink-primary'">{{ m.value }}</span>
+            <span v-if="m.unit" class="text-2xs text-ink-muted">{{ m.unit }}</span>
+          </p>
+          <p class="mt-0.5 truncate text-2xs text-ink-muted">{{ m.note }}</p>
+        </div>
+      </div>
+
+      <!-- Breakdown bars -->
+      <div class="border-t border-line p-3">
+        <p class="field-label mb-2">{{ activeReport.breakdownLabel }}</p>
+        <div class="space-y-2">
+          <div v-for="b in breakdown" :key="b.name" class="flex items-center gap-3">
+            <span class="w-40 shrink-0 truncate text-xs text-ink-secondary">{{ b.name }}</span>
+            <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+              <div class="h-full rounded-full" :class="b.bar" :style="{ width: b.pct + '%' }" />
+            </div>
+            <span class="w-10 shrink-0 text-right font-mono text-2xs tabular-nums text-ink-muted">{{ b.pct }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export: no file backend exists, so this renders a print-ready preview
+           in place rather than claiming a file was "securely prepared" (UX-07). -->
+      <div class="flex items-center justify-between gap-3 border-t border-line px-3 py-2.5">
+        <p class="text-2xs text-ink-muted">Figures are synthetic demonstration data. Export to PDF is not yet connected.</p>
+        <button class="btn" @click="printPreview">
+          <Printer class="h-3.5 w-3.5" aria-hidden="true" />
+          Print preview
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import {
-  Download, ShieldAlert, PiggyBank,
-  Loader2, Info, Lock, Terminal, Activity, TrendingUp
-} from 'lucide-vue-next'
-import { ref, inject } from 'vue'
+import { ref, computed } from 'vue'
+import { ShieldAlert, Activity, Printer } from 'lucide-vue-next'
+import DemoBadge from '~/components/ui/DemoBadge.vue'
+import { useSystemState } from '~/composables/useSystemState'
 
-const toast = inject('toast')
-const isGenerating = ref(null)
-const progress = ref(0)
+useHead({ title: 'Reports | OptiSight' })
 
-// SEO & Metadata
-useSeoMeta({
-  title: 'Audit & Reports | Optisight',
-  description: 'Download detailed security and financial ROI reports for stakeholders.',
+const { stats } = useSystemState()
+
+const reportTypes = [
+  { key: 'threat', label: 'Threat Assessment', icon: ShieldAlert, breakdownLabel: 'Detections by category' },
+  { key: 'performance', label: 'Network Performance', icon: Activity, breakdownLabel: 'Load by system' }
+]
+const periods = [
+  { key: 'day', label: 'Daily' },
+  { key: 'week', label: 'Weekly' },
+  { key: 'month', label: 'Monthly' }
+]
+
+const reportType = ref('threat')
+const period = ref('week')
+
+const activeReport = computed(() => reportTypes.find((r) => r.key === reportType.value))
+const activePeriod = computed(() => periods.find((p) => p.key === period.value))
+const generatedAt = computed(() => new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC')
+
+// Period multiplier so figures scale sensibly across daily/weekly/monthly.
+const scale = computed(() => ({ day: 1, week: 7, month: 30 })[period.value])
+
+const metrics = computed(() => {
+  if (reportType.value === 'threat') {
+    const detections = Math.round(stats.value.activeAlerts * 42 * scale.value)
+    return [
+      { label: 'Detections', value: detections.toLocaleString(), note: 'total events triaged' },
+      { label: 'Auto-contained', value: `${Math.round(72 + stats.value.activeAlerts) }`, unit: '%', note: 'by policy', tone: 'text-ink-primary' },
+      { label: 'Open at period end', value: stats.value.activeAlerts, note: 'awaiting triage', tone: stats.value.activeAlerts > 0 ? 'text-sev-high' : 'text-ink-primary' },
+      { label: 'Mean time to detect', value: '2m 12s', note: 'rolling average' }
+    ]
+  }
+  return [
+    { label: 'Systems online', value: `${stats.value.systemsOnline}/${stats.value.totalSystems}`, note: 'period average' },
+    { label: 'Pipeline health', value: stats.value.health, unit: '%', note: 'weighted', tone: Number(stats.value.health) < 80 ? 'text-sev-high' : 'text-ink-primary' },
+    { label: 'Aggregate ingest', value: stats.value.totalRate, unit: 'GB/s', note: 'peak observed' },
+    { label: 'Warnings raised', value: Math.round(stats.value.activeAlerts * scale.value), note: 'across connectors' }
+  ]
 })
 
-const ranges = ['รายวัน', 'รายเดือน', 'รายปี']
-const securityRange = ref('รายวัน')
-const roiRange = ref('รายเดือน')
+const breakdown = computed(() => {
+  if (reportType.value === 'threat') {
+    return [
+      { name: 'Credential access', pct: 38, bar: 'bg-sev-critical' },
+      { name: 'Reconnaissance / scans', pct: 27, bar: 'bg-sev-high/85' },
+      { name: 'Anomalous data flow', pct: 21, bar: 'bg-line-strong' },
+      { name: 'Policy violations', pct: 14, bar: 'bg-line-strong' }
+    ]
+  }
+  return [
+    { name: 'Security tooling', pct: 44, bar: 'bg-line-strong' },
+    { name: 'Databases', pct: 33, bar: 'bg-line-strong' },
+    { name: 'Cloud & containers', pct: 23, bar: 'bg-line-strong' }
+  ]
+})
 
-const { stats: sysStats } = useSystemState()
-
-const detailedSecurity = computed(() => [
-  { label: 'Total Incidents', value: (sysStats.value.activeAlerts * 14).toLocaleString(), trend: +12 },
-  { label: 'System Uptime', value: sysStats.value.health + '%', trend: -0.02 },
-  { label: 'Brute Force Attempts', value: '14,210', trend: +45 },
-  { label: 'Threats Blocked', value: '100%', trend: 0 }
-])
-
-const securityOptions = [
-  { name: 'XSS & SQLi Detection', value: 92, icon: Terminal },
-  { name: 'Session Hijack Audits', value: 34, icon: Lock },
-  { name: 'DDoS Mitigation State', value: 68, icon: Activity }
-]
-
-const roiBreakdown = [
-  { label: 'Infrastructure Cost', value: '฿412,000' },
-  { label: 'DevOps Efficiency', value: '94.2%' },
-  { label: 'Avg Latency Savings', value: '฿12,400' },
-  { label: 'Cloud Waste Identified', value: '฿45,000' }
-]
-
-const handleGenerate = (type) => {
-  isGenerating.value = type
-  progress.value = 0
-
-  const interval = setInterval(() => {
-    progress.value += Math.floor(Math.random() * 15) + 5
-    if (progress.value >= 100) {
-      progress.value = 100
-      clearInterval(interval)
-      setTimeout(() => {
-        const labels = {
-          security: 'Full Security Audit (SOC-Level)',
-          roi: 'Business ROI & Financial Audit'
-        }
-        toast.add('Audit Ready', `Your ${labels[type]} has been securely prepared.`, 'success')
-        isGenerating.value = null
-        progress.value = 0
-      }, 500)
-    }
-  }, 350)
+const printPreview = () => {
+  if (import.meta.client) window.print()
 }
 </script>
-
-<style scoped>
-.glass-card {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(12px);
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>

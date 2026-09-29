@@ -3,10 +3,16 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/auth.middleware';
+import { config } from '../config';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'optisight-super-secret-key-2026';
+
+// A precomputed bcrypt hash of a random string. When a login names an unknown
+// account we still run a comparison against this so the unknown-user and
+// wrong-password paths take comparable time — closing the timing oracle in
+// SEC-AUTH-004. It is never a valid password for any real account.
+const DUMMY_HASH = '$2b$12$hLbQXHmXtjYNjzw5Vd/AI.yhUTr7hVnCXHdrESTFqWIt4SgshI6mi';
 
 // ─── POST /api/auth/register ─────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
@@ -53,7 +59,7 @@ router.post('/register', async (req, res) => {
 
     // Generate JWT immediately after registration
     const payload = { id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
 
     res.status(201).json({ token, user: payload });
   } catch (error) {
@@ -71,22 +77,22 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    // Find the user
+    // Find the user. Run a bcrypt compare on both branches — against a dummy
+    // hash when the account does not exist — so unknown-user and wrong-password
+    // requests take comparable time and cannot be distinguished (SEC-AUTH-004).
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
-    }
+    const validPassword = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
 
-    // Validate password
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      // Log failed attempt
+    if (!user || !validPassword) {
+      // Audit both failure modes. Previously an unknown-email attempt wrote no
+      // row, hiding the strongest brute-force / enumeration signal (SEC-LOG-001).
+      // Never store the submitted password or the raw probe as identifying data.
       await prisma.auditLog.create({
         data: {
-          userId: user.id,
+          userId: user?.id ?? null,
           action: 'LOGIN_FAILED',
           ipAddress: req.ip || req.socket.remoteAddress,
-          details: 'Invalid password attempt',
+          details: user ? 'Invalid password attempt' : 'Login attempt for unknown account',
         },
       });
       return res.status(401).json({ error: 'Invalid email or password.' });
@@ -94,7 +100,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT
     const payload = { id: user.id, email: user.email, role: user.role, name: user.name };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
 
     // Log successful login
     await prisma.auditLog.create({

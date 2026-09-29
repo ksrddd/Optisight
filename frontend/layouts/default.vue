@@ -1,21 +1,38 @@
 <template>
-  <div class="h-screen bg-slate-950 flex overflow-hidden">
-    <!-- Sidebar Component -->
+  <div class="flex h-screen overflow-hidden bg-surface-base">
     <Sidebar />
 
-    <!-- Main Workspace -->
-    <div class="flex-1 flex flex-col min-w-0 relative z-10 transition-all duration-300">
+    <div class="flex min-w-0 flex-1 flex-col">
       <Header />
 
-      <!-- Page Content -->
-      <main class="flex-1 overflow-y-auto px-4 py-8 md:px-8 lg:px-12">
-        <div class="max-w-7xl mx-auto space-y-8">
+      <!--
+        Two content modes.
+
+        `dense` pages (the SOC console) own the whole viewport and never scroll
+        the document — only their internal virtualised regions scroll. Every
+        other route keeps the original scrolling canvas so it renders unchanged
+        while it awaits migration.
+      -->
+      <main v-if="dense" class="min-h-0 flex-1 overflow-hidden">
+        <slot />
+      </main>
+
+      <main v-else class="flex-1 overflow-y-auto px-4 py-8 md:px-8">
+        <div class="mx-auto max-w-7xl space-y-8">
           <slot />
         </div>
       </main>
     </div>
+
+    <CommandPalette />
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import CommandPalette from '~/components/soc/CommandPalette.vue'
+
+const route = useRoute()
+const dense = computed(() => route.meta.dense === true)
 </script>

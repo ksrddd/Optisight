@@ -1,167 +1,195 @@
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">Intelligent Alert Center</h1>
-        <p class="text-slate-400 mt-1">Review centralized system anomalies and security threat detections.</p>
+  <div class="flex h-full min-h-0 flex-col bg-surface-base">
+    <!-- Page head -->
+    <div class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-3">
+      <div class="min-w-0">
+        <h1 class="flex items-center gap-2 truncate text-lg font-semibold tracking-[-0.02em] text-ink-primary">
+          Alert Center
+          <DemoBadge />
+        </h1>
+        <p class="truncate text-xs text-ink-muted">
+          Cross-team anomaly routing · <span class="font-mono">{{ open.length }}</span> open of
+          <span class="font-mono">{{ alerts.length }}</span>
+        </p>
       </div>
-      <div class="flex items-center gap-2 bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
-        <button class="px-4 py-1.5 text-sm font-medium rounded-md bg-white/10 text-white shadow-sm">All Alerts</button>
-        <button
-          class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-white/5 transition-colors">IT Operations</button>
-        <button
-          class="px-4 py-1.5 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-white/5 transition-colors">SOC / Security</button>
-      </div>
+      <button class="btn shrink-0" :disabled="loading" @click="load">
+        <RefreshCw class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" aria-hidden="true" />
+        Refresh
+      </button>
     </div>
 
-    <!-- Alert List -->
-    <div class="glass flex flex-col rounded-2xl border border-slate-700/50 overflow-hidden">
-      <!-- Loading State -->
-      <div v-if="pending" class="p-8 flex justify-center">
-        <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
+    <!-- Routing filter: which team owns the response. Counts report what each
+         narrowing will show before it is clicked. -->
+    <div class="flex shrink-0 items-stretch border-b border-line bg-surface-raised">
+      <button
+        v-for="t in teams"
+        :key="t.key"
+        class="flex min-w-[130px] flex-1 flex-col gap-0.5 border-r border-line px-3 py-2 text-left
+               transition-colors duration-fast last:border-r-0 hover:bg-surface-hover"
+        :class="team === t.key ? 'bg-surface-hover' : ''"
+        :aria-pressed="team === t.key"
+        @click="team = t.key"
+      >
+        <span class="field-label truncate">{{ t.label }}</span>
+        <span class="flex items-baseline gap-1.5">
+          <span class="text-xl font-semibold tabular-nums text-ink-primary">{{ countFor(t.key) }}</span>
+          <span class="truncate text-2xs text-ink-muted">{{ t.note }}</span>
+        </span>
+      </button>
+    </div>
 
-      <!-- List -->
-      <transition-group v-else name="list" tag="div" class="divide-y divide-white/5">
-        <div v-for="alert in alerts" :key="alert.id"
-          class="p-6 flex items-start gap-4 hover:bg-white/5 transition-colors group cursor-pointer relative">
-
-          <!-- Severity Icon -->
-          <div class="mt-1">
-            <div v-if="alert.severity === 'critical'"
-              class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.3)]">
-              <ShieldAlert v-if="alert.type === 'SOC'" class="w-5 h-5" />
-              <Server v-else class="w-5 h-5" />
-            </div>
-            <div v-else-if="alert.severity === 'warning'"
-              class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <AlertTriangle class="w-5 h-5" />
-            </div>
-            <div v-else
-              class="w-10 h-10 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30">
-              <Info class="w-5 h-5" />
-            </div>
-          </div>
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-4">
-              <h3 class="text-base font-medium text-white group-hover:text-amber-300 transition-colors">{{
-                alert.message }}</h3>
-              <span class="text-xs font-medium text-slate-500 whitespace-nowrap">{{ alert.time }}</span>
-            </div>
-            <p class="mt-1 text-sm text-slate-400 line-clamp-2">
-              {{ alert.description }}
-            </p>
-            
-            <div class="mt-3 flex items-center gap-2">
-              <span class="text-xs font-semibold px-2 py-1 rounded-md"
-                :class="alert.type === 'SOC' ? 'bg-rose-500/20 text-rose-400' : 'bg-indigo-500/20 text-indigo-400'">
-                Team: {{ alert.type }}
-              </span>
-              <span class="text-xs font-medium text-slate-500">Source: {{ alert.source }}</span>
-            </div>
-
-            <!-- Actions -->
-            <div class="mt-4 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button @click.stop="investigate(alert)"
-                class="px-3 py-1 text-xs font-medium bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-md border border-indigo-500/20 transition-colors">
-                Run Diagnostics
-              </button>
-              <button @click.stop="dismiss(alert.id)"
-                class="px-3 py-1 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700 transition-colors">
-                Acknowledge
-              </button>
-            </div>
+    <!-- Body: loading / error / empty / ready -->
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      <!-- Loading -->
+      <div v-if="loading" class="divide-y divide-line-faint">
+        <div v-for="i in 4" :key="i" class="flex items-center gap-3 px-3 py-3.5">
+          <div class="h-8 w-1 shrink-0 rounded bg-surface-hover" />
+          <div class="flex-1 space-y-2">
+            <div class="h-3 w-1/3 rounded bg-surface-hover" />
+            <div class="h-2.5 w-2/3 rounded bg-surface-raised" />
           </div>
         </div>
-      </transition-group>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="error" class="flex h-full items-center justify-center p-6">
+        <div class="max-w-[300px] text-center">
+          <AlertTriangle class="mx-auto h-5 w-5 text-sev-high" aria-hidden="true" />
+          <p class="mt-2 text-sm font-medium text-ink-primary">Couldn't load alerts</p>
+          <p class="mt-1 text-xs text-ink-muted">{{ error }}</p>
+          <button class="btn mt-3" @click="load">Try again</button>
+        </div>
+      </div>
+
+      <!-- Empty (no data at all, or filtered to zero) -->
+      <div v-else-if="!visible.length" class="flex h-full items-center justify-center p-6">
+        <div class="max-w-[300px] text-center">
+          <CheckCircle2 class="mx-auto h-5 w-5 text-ink-faint" aria-hidden="true" />
+          <p class="mt-2 text-sm font-medium text-ink-primary">
+            {{ alerts.length ? 'Nothing in this view' : 'No open alerts' }}
+          </p>
+          <p class="mt-1 text-xs text-ink-muted">
+            {{ alerts.length ? 'No alerts are routed to this team right now.' : 'Anomalies appear here as they are detected and routed.' }}
+          </p>
+          <button v-if="alerts.length && team !== 'all'" class="btn mt-3" @click="team = 'all'">Show all teams</button>
+        </div>
+      </div>
+
+      <!-- Ready -->
+      <ul v-else class="divide-y divide-line-faint">
+        <li
+          v-for="a in visible"
+          :key="a.id"
+          class="flex items-start gap-3 px-3 py-3 transition-colors duration-fast hover:bg-surface-raised"
+        >
+          <!-- Severity rail: shape + code, never colour alone -->
+          <span class="mt-0.5 h-8 w-[3px] shrink-0 rounded-[1px]" :class="barFor(a.severity)" aria-hidden="true" />
+
+          <div class="min-w-0 flex-1">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex min-w-0 items-center gap-2">
+                <SeverityTag :severity="tagSeverity(a.severity)" />
+                <h3 class="truncate text-sm font-medium text-ink-primary">{{ a.title }}</h3>
+              </div>
+              <time class="shrink-0 font-mono text-2xs tabular-nums text-ink-muted" :datetime="new Date(a.ts).toISOString()">
+                {{ relative(a.ts) }}
+              </time>
+            </div>
+
+            <p class="mt-1 text-xs text-ink-secondary">{{ a.description }}</p>
+
+            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <span
+                class="inline-flex items-center gap-1 rounded border border-line px-1.5 py-0.5 text-2xs font-medium text-ink-muted"
+              >
+                <component :is="teamIcon(a.team)" class="h-3 w-3" aria-hidden="true" />
+                {{ teamLabel(a.team) }}
+              </span>
+              <span class="truncate font-mono text-2xs text-ink-faint">{{ a.source }}</span>
+
+              <!-- Actions are always visible: never hidden behind hover, which
+                   is invisible on touch and unreachable by keyboard (UX-03). -->
+              <span class="ml-auto flex shrink-0 items-center gap-1.5">
+                <button class="btn h-6 px-2 text-2xs" @click="investigate(a)">Run diagnostics</button>
+                <button class="btn h-6 px-2 text-2xs" @click="acknowledge(a)">Acknowledge</button>
+              </span>
+            </div>
+          </div>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ShieldAlert, Server, AlertTriangle, Info } from 'lucide-vue-next'
-import { ref, onMounted, inject } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
+import { RefreshCw, AlertTriangle, CheckCircle2, Shield, Server, Layers } from 'lucide-vue-next'
+import SeverityTag from '~/components/soc/SeverityTag.vue'
+import DemoBadge from '~/components/ui/DemoBadge.vue'
+import { useUser } from '~/composables/useUser'
 
-const toast = inject('toast')
+definePageMeta({ dense: true })
+useHead({ title: 'Alert Center | OptiSight' })
+
+const toast = inject('toast', { add: () => {} })
 const config = useRuntimeConfig()
-const { data: rawAlerts, pending } = await useFetch(`${config.public.apiBase}/api/stats`, { server: false })
+const { token } = useUser()
+
 const alerts = ref([])
+const loading = ref(true)
+const error = ref('')
+const team = ref('all')
 
-const dismiss = (id) => {
-  alerts.value = alerts.value.filter(a => a.id !== id)
-  toast.add('Alert Acknowledged', 'System operator has acknowledged this anomaly.', 'info')
+const teams = [
+  { key: 'all', label: 'All alerts', note: 'every team' },
+  { key: 'soc', label: 'SOC / Security', note: 'intrusion & risk' },
+  { key: 'itops', label: 'IT Operations', note: 'performance & capacity' }
+]
+
+const load = async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    const data = await $fetch(`${config.public.apiBase}/api/alerts`, {
+      headers: token.value ? { Authorization: `Bearer ${token.value}` } : {}
+    })
+    alerts.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    error.value = err.data?.error || 'The alert service is unavailable.'
+    alerts.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
-const investigate = (alert) => {
-  toast.add('Diagnostics Started', `Running root cause analysis for: ${alert.message}`, 'success')
+onMounted(load)
+
+const open = computed(() => alerts.value)
+const countFor = (key) => (key === 'all' ? alerts.value.length : alerts.value.filter((a) => a.team === key).length)
+const visible = computed(() => (team.value === 'all' ? alerts.value : alerts.value.filter((a) => a.team === team.value)))
+
+// Alert levels (critical/warning/info) map onto the shared severity scale so one
+// SeverityTag serves the whole app. Bars follow the console rule: colour for the
+// levels that demand action, neutral for the informational baseline.
+const tagSeverity = (s) => ({ critical: 'critical', warning: 'high', info: 'low' })[s] || 'low'
+const barFor = (s) => ({ critical: 'bg-sev-critical', warning: 'bg-sev-high', info: 'bg-line-strong' })[s] || 'bg-line-strong'
+
+const teamLabel = (t) => (t === 'soc' ? 'SOC / Security' : 'IT Operations')
+const teamIcon = (t) => (t === 'soc' ? Shield : t === 'itops' ? Server : Layers)
+
+const relative = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000)
+  if (s < 60) return `${s}s ago`
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+  return `${Math.floor(s / 86400)}d ago`
 }
 
-onMounted(() => {
-  alerts.value = [
-    { 
-      id: 1, 
-      type: 'IT Ops',
-      source: 'Payment Gateway Node 4',
-      message: 'High Latency Detected on Payment API', 
-      description: 'API response times have degraded by 300% over the last 5 minutes. Approaching timeout thresholds.',
-      severity: 'critical', 
-      time: '2m ' 
-    },
-    { 
-      id: 2, 
-      type: 'SOC',
-      source: 'External VPN Gateway',
-      message: 'Multiple Failed IAM Auth Attempts', 
-      description: 'Algorithm detected brute force signature originating from unknown IP subnet targeting admin accounts.',
-      severity: 'critical', 
-      time: '8m ' 
-    },
-    { 
-      id: 3, 
-      type: 'IT Ops',
-      source: 'Core Database Cluster',
-      message: 'Storage IOPS Spike Detected', 
-      description: 'Unusual spike in disk read operations across replication nodes. Query optimization may be required.',
-      severity: 'warning', 
-      time: '15m ' 
-    }
-  ]
-})
+const acknowledge = (a) => {
+  alerts.value = alerts.value.filter((x) => x.id !== a.id)
+  toast.add('Alert acknowledged', `${a.id} cleared from the queue.`, 'info')
+}
+const investigate = (a) => {
+  toast.add('Diagnostics started', `Root-cause analysis running for ${a.id}.`, 'success')
+}
 </script>
-
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* List Transitions */
-.list-leave-active {
-  transition: all 0.4s ease;
-  position: absolute;
-  width: 100%;
-}
-
-.list-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-.list-move {
-  transition: transform 0.4s ease;
-}
-</style>

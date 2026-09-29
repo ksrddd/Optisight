@@ -1,166 +1,207 @@
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-white tracking-tight">System Settings</h1>
-        <p class="text-slate-400 mt-1">Configure monitoring thresholds and notification preferences.</p>
+  <div class="flex h-full min-h-0 flex-col bg-surface-base">
+    <!-- Page head -->
+    <div class="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-3">
+      <div class="min-w-0">
+        <h1 class="truncate text-lg font-semibold tracking-[-0.02em] text-ink-primary">Settings</h1>
+        <p class="truncate text-xs text-ink-muted">Profile, detection thresholds and delivery channels</p>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+        <span v-if="dirty" class="hidden items-center gap-1.5 sm:flex">
+          <span class="h-1.5 w-1.5 rounded-full bg-sev-high" aria-hidden="true" />
+          <span class="text-xs text-sev-high">Unsaved changes</span>
+        </span>
+        <button class="btn" @click="resetForm">Reset section</button>
+        <button class="btn btn-primary" :disabled="!dirty" @click="saveSettings">Save changes</button>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <!-- Tabs -->
-      <div class="lg:col-span-1 space-y-2">
-        <button 
-          v-for="tab in tabs" 
+    <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+      <!-- Section nav -->
+      <nav
+        class="flex shrink-0 gap-px overflow-x-auto border-b border-line bg-surface-raised p-2
+               md:w-[196px] md:flex-col md:overflow-y-auto md:border-b-0 md:border-r"
+        aria-label="Settings sections"
+      >
+        <button
+          v-for="tab in tabs"
           :key="tab.id"
+          class="flex h-[26px] shrink-0 items-center gap-2 whitespace-nowrap rounded px-2 text-sm
+                 transition-colors duration-fast ease-out hover:bg-surface-hover hover:text-ink-primary"
+          :class="activeTab === tab.id ? 'bg-surface-hover font-medium text-ink-primary' : 'text-ink-secondary'"
+          :aria-current="activeTab === tab.id ? 'page' : undefined"
           @click="activeTab = tab.id"
-          :class="activeTab === tab.id ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'text-slate-400 hover:bg-white/5 border border-transparent'"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm"
         >
-          <component :is="tab.icon" class="w-4 h-4" />
+          <component
+            :is="tab.icon"
+            class="h-3.5 w-3.5 shrink-0"
+            :class="activeTab === tab.id ? 'text-ink-primary' : 'text-ink-faint'"
+            aria-hidden="true"
+          />
           {{ tab.name }}
         </button>
-      </div>
+      </nav>
 
-      <!-- Tab Content -->
-      <div class="lg:col-span-3">
-        <div class="glass-card p-8 border border-slate-700/50 h-full flex flex-col">
-          
-          <!-- Profile Tab -->
-          <div v-if="activeTab === 'profile'" class="space-y-8 animate-fade-in">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-2">User Profile</h2>
-              <p class="text-sm text-slate-400">Personalize your identity across the monitoring network.</p>
-            </div>
+      <!-- Section content -->
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        <!-- Left-aligned against the section nav. A centred column would float
+             the form in dead space on a wide operations monitor. -->
+        <div class="max-w-[720px] px-4 py-4">
+          <!-- Profile ---------------------------------------------------- -->
+          <section v-if="activeTab === 'profile'">
+            <h2 class="text-md font-semibold text-ink-primary">User profile</h2>
+            <p class="mt-0.5 text-xs text-ink-muted">
+              How you appear to the rest of the operations team.
+            </p>
 
-            <div class="flex flex-col md:flex-row gap-10 items-start">
-              <!-- Avatar Selector -->
-              <div class="space-y-4">
-                <label class="text-sm font-medium text-slate-300">Profile Image</label>
-                <div class="relative group">
-                  <div class="w-32 h-32 rounded-3xl bg-slate-800 border-2 border-indigo-500/30 overflow-hidden shadow-2xl">
-                    <img :src="profileForm.avatar" alt="Avatar" class="w-full h-full object-cover">
-                  </div>
-                </div>
-                <div class="grid grid-cols-4 gap-2">
-                  <button 
-                    v-for="s in seeds" :key="s"
-                    @click="profileForm.avatar = `https://api.dicebear.com/9.x/notionists/svg?seed=${s}`"
-                    class="w-8 h-8 rounded-lg overflow-hidden border-2 transition-all"
-                    :class="profileForm.avatar.includes(s) ? 'border-indigo-500 scale-110' : 'border-transparent opacity-60 hover:opacity-100'"
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr]">
+              <div>
+                <span class="field-label">Avatar</span>
+                <img
+                  :src="profileForm.avatar"
+                  alt=""
+                  class="mt-1.5 h-16 w-16 rounded border border-line bg-surface-panel object-cover"
+                />
+                <div class="mt-1.5 grid w-[88px] grid-cols-4 gap-1">
+                  <button
+                    v-for="s in seeds"
+                    :key="s"
+                    class="aspect-square overflow-hidden rounded-[3px] border transition-colors duration-fast"
+                    :class="profileForm.avatar.includes(s) ? 'border-ink-primary' : 'border-line hover:border-line-strong'"
+                    :aria-label="`Use avatar ${s}`"
+                    :aria-pressed="profileForm.avatar.includes(s)"
+                    @click="profileForm.avatar = avatarFor(s)"
                   >
-                    <img :src="`https://api.dicebear.com/9.x/notionists/svg?seed=${s}`" class="w-full h-full object-cover">
+                    <img :src="avatarFor(s)" alt="" class="h-full w-full object-cover" />
                   </button>
                 </div>
               </div>
 
-              <!-- Profile Form -->
-              <div class="flex-1 space-y-6 w-full">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <label class="text-xs font-medium text-slate-500 uppercase ml-1">Full Name</label>
-                    <input 
-                      v-model="profileForm.name"
-                      type="text" 
-                      class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                    >
-                  </div>
-                  <div class="space-y-2">
-                    <label class="text-xs font-medium text-slate-500 uppercase ml-1">Job Role</label>
-                    <input 
-                      v-model="profileForm.role"
-                      type="text" 
-                      class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                    >
-                  </div>
-                </div>
-                <div class="space-y-2">
-                  <label class="text-xs font-medium text-slate-500 uppercase ml-1">Email Address</label>
-                  <input 
-                    v-model="profileForm.email"
-                    type="email" 
-                    class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white focus:outline-none focus:border-indigo-500/50 transition-all"
-                  >
-                </div>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label class="block">
+                  <span class="field-label">Full name</span>
+                  <input v-model="profileForm.name" type="text" class="input mt-1" />
+                </label>
+                <label class="block">
+                  <span class="field-label">Job role</span>
+                  <input v-model="profileForm.role" type="text" class="input mt-1" />
+                </label>
+                <label class="block sm:col-span-2">
+                  <span class="field-label">Email address</span>
+                  <input v-model="profileForm.email" type="email" class="input mt-1 font-mono" />
+                </label>
               </div>
             </div>
-          </div>
+          </section>
 
-          <!-- General Monitoring -->
-          <div v-if="activeTab === 'general'" class="space-y-8 animate-fade-in">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-2">Monitoring Thresholds</h2>
-              <p class="text-sm text-slate-400">Define when the system should flag warnings or critical alerts.</p>
-            </div>
+          <!-- Thresholds ------------------------------------------------- -->
+          <section v-else-if="activeTab === 'general'">
+            <h2 class="text-md font-semibold text-ink-primary">Detection thresholds</h2>
+            <p class="mt-0.5 text-xs text-ink-muted">
+              The point at which a reading stops being normal and becomes an alert.
+            </p>
 
-            <div class="space-y-6">
-              <div v-for="setting in thresholdsForm" :key="setting.name" class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-medium text-slate-300">{{ setting.name }}</label>
-                  <span class="text-xs font-mono text-indigo-400">{{ setting.value }}{{ setting.unit }}</span>
-                </div>
-                <input 
-                  type="range" 
-                  v-model="setting.value" 
-                  :min="setting.min" 
-                  :max="setting.max"
-                  class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                >
-              </div>
-            </div>
-          </div>
-
-          <!-- Notification Settings -->
-          <div v-if="activeTab === 'notifications'" class="space-y-8 animate-fade-in">
-            <div>
-              <h2 class="text-xl font-semibold text-white mb-2">Notification Channel</h2>
-              <p class="text-sm text-slate-400">Where should we send critical system alerts?</p>
-            </div>
-
-            <div class="space-y-4">
-              <div v-for="channel in channelsForm" :key="channel.name" 
-                @click="channel.enabled = !channel.enabled"
-                class="flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all"
-                :class="channel.enabled ? 'bg-white/5 border-slate-600' : 'bg-transparent border-white/5 opacity-50'"
+            <ul class="mt-4 overflow-hidden rounded border border-line">
+              <li
+                v-for="setting in thresholdsForm"
+                :key="setting.name"
+                class="border-b border-line-faint px-3 py-2.5 last:border-b-0"
               >
-                <div class="flex items-center gap-3">
-                  <component :is="getChannelIcon(channel.name)" class="w-5 h-5" :class="channel.enabled ? 'text-white' : 'text-slate-500'" />
-                  <span class="text-sm font-medium text-white">{{ channel.name }}</span>
+                <div class="flex items-baseline justify-between gap-3">
+                  <label :for="fieldId(setting.name)" class="truncate text-sm text-ink-secondary">
+                    {{ setting.name }}
+                  </label>
+                  <span class="shrink-0 font-mono text-sm tabular-nums text-ink-primary">
+                    {{ setting.value }}<span class="text-ink-muted">{{ setting.unit }}</span>
+                  </span>
                 </div>
-                <div class="w-5 h-5 rounded border border-slate-700 flex items-center justify-center transition-all"
-                  :class="channel.enabled ? 'bg-indigo-500 border-indigo-500' : ''">
-                  <Check v-if="channel.enabled" class="w-3 h-3 text-white" />
+
+                <input
+                  :id="fieldId(setting.name)"
+                  v-model.number="setting.value"
+                  type="range"
+                  :min="setting.min"
+                  :max="setting.max"
+                  class="range mt-2"
+                />
+
+                <div class="mt-1 flex justify-between font-mono text-2xs tabular-nums text-ink-faint">
+                  <span>{{ setting.min }}{{ setting.unit }}</span>
+                  <span>{{ setting.max }}{{ setting.unit }}</span>
                 </div>
-              </div>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Notifications ---------------------------------------------- -->
+          <section v-else-if="activeTab === 'notifications'">
+            <h2 class="text-md font-semibold text-ink-primary">Delivery channels</h2>
+            <p class="mt-0.5 text-xs text-ink-muted">
+              Where critical alerts are sent. Disabling every channel silences paging entirely.
+            </p>
+
+            <ul class="mt-4 overflow-hidden rounded border border-line">
+              <li
+                v-for="channel in channelsForm"
+                :key="channel.name"
+                class="flex items-center gap-3 border-b border-line-faint px-3 py-2.5 last:border-b-0"
+              >
+                <component
+                  :is="channelIcon(channel.name)"
+                  class="h-4 w-4 shrink-0"
+                  :class="channel.enabled ? 'text-ink-secondary' : 'text-ink-faint'"
+                  aria-hidden="true"
+                />
+                <span class="min-w-0 flex-1 truncate text-sm" :class="channel.enabled ? 'text-ink-primary' : 'text-ink-muted'">
+                  {{ channel.name }}
+                </span>
+
+                <!-- A real switch: reports its state to assistive tech and is
+                     reachable by keyboard, unlike the previous clickable div. -->
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="channel.enabled"
+                  :aria-label="channel.name"
+                  class="relative h-4 w-7 shrink-0 rounded-full border transition-colors duration-fast"
+                  :class="channel.enabled ? 'border-ink-primary bg-ink-primary' : 'border-line-strong bg-surface-input'"
+                  @click="channel.enabled = !channel.enabled"
+                >
+                  <span
+                    class="absolute top-[1px] h-[12px] w-[12px] rounded-full transition-all duration-fast"
+                    :class="channel.enabled ? 'left-[13px] bg-surface-base' : 'left-[1px] bg-ink-faint'"
+                  />
+                </button>
+              </li>
+            </ul>
+
+            <p v-if="allChannelsOff" class="mt-2 flex items-start gap-2 text-xs text-sev-high">
+              <AlertTriangle class="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              Every channel is off. Critical alerts will appear in the console only, with no one paged.
+            </p>
+          </section>
+
+          <!-- Security --------------------------------------------------- -->
+          <section v-else>
+            <h2 class="text-md font-semibold text-ink-primary">Hardware security key</h2>
+            <p class="mt-0.5 text-xs text-ink-muted">
+              Bind a FIDO2 authenticator to require physical presence for privileged actions.
+            </p>
+
+            <div class="mt-4 rounded border border-line bg-surface-raised px-4 py-6 text-center">
+              <Shield class="mx-auto h-5 w-5 text-ink-faint" aria-hidden="true" />
+              <p class="mt-2 text-sm font-medium text-ink-primary">No security key registered</p>
+              <p class="mx-auto mt-1 max-w-[340px] text-xs text-ink-muted">
+                Insert a FIDO2 key and start a scan. Until one is bound, privileged actions rely on your
+                password and second factor alone.
+              </p>
+              <button class="btn mx-auto mt-3" @click="scan">
+                <Usb class="h-3.5 w-3.5" aria-hidden="true" />
+                Scan for devices
+              </button>
             </div>
-          </div>
-
-          <!-- Security Tab -->
-          <div v-if="activeTab === 'security'" class="space-y-8">
-             <div class="p-12 flex flex-col items-center justify-center text-center opacity-50">
-               <Shield class="w-16 h-16 text-slate-600 mb-4" />
-               <h3 class="text-lg font-medium text-white">Security Hardware Binding</h3>
-               <p class="text-sm text-slate-500 max-w-xs mt-2">Connect a physical FIDO2 key to manage advanced security settings.</p>
-               <button class="mt-6 px-6 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium cursor-not-allowed">Scan for Devices</button>
-             </div>
-          </div>
-
-          <div class="mt-auto pt-10 flex justify-end gap-3">
-            <button 
-              @click="resetForm"
-              class="px-6 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
-            >
-              Reset
-            </button>
-            <button 
-              @click="saveSettings"
-              class="px-8 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
-            >
-              Save Configuration
-            </button>
-          </div>
-
+          </section>
         </div>
       </div>
     </div>
@@ -168,33 +209,56 @@
 </template>
 
 <script setup>
-import { Settings, Bell, Shield, User, Activity, Check, Mail, MessageSquare, Globe } from 'lucide-vue-next'
-import { ref, inject, reactive, watch } from 'vue'
+import { Settings, Bell, Shield, User, Mail, MessageSquare, Globe, AlertTriangle, Usb } from 'lucide-vue-next'
+import { ref, inject, reactive, computed, watch } from 'vue'
 import { useUser, DEFAULTS } from '~/composables/useUser'
 
-const toast = inject('toast')
+definePageMeta({ dense: true })
+useHead({ title: 'Settings | OptiSight' })
+
+const toast = inject('toast', { add: () => {} })
 const { user, settings, updateProfile, updateSettings } = useUser()
 
 const activeTab = ref('profile')
 const seeds = ['Admin', 'Sasha', 'Felix', 'Luna', 'Neo', 'Vesper', 'Aria', 'Kael']
 
-// Initialize forms from global state
+const avatarFor = (seed) => `https://api.dicebear.com/9.x/notionists/svg?seed=${seed}`
+
+// Forms are working copies; global state only changes on save.
 const profileForm = reactive({ ...user.value })
 const thresholdsForm = ref(JSON.parse(JSON.stringify(settings.value.thresholds)))
 const channelsForm = ref(JSON.parse(JSON.stringify(settings.value.notifications)))
 
 const tabs = [
-  { id: 'profile', name: 'User Profile', icon: User },
-  { id: 'general', name: 'General', icon: Settings },
+  { id: 'profile', name: 'Profile', icon: User },
+  { id: 'general', name: 'Thresholds', icon: Settings },
   { id: 'notifications', name: 'Notifications', icon: Bell },
-  { id: 'security', name: 'Security', icon: Shield },
+  { id: 'security', name: 'Security key', icon: Shield }
 ]
 
-const getChannelIcon = (name) => {
+const fieldId = (name) => `set-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+
+const channelIcon = (name) => {
   if (name.includes('Email')) return Mail
   if (name.includes('Slack')) return MessageSquare
   return Globe
 }
+
+const allChannelsOff = computed(() => channelsForm.value.every((c) => !c.enabled))
+
+/** Whether the visible section differs from saved state — drives the save button. */
+const dirty = computed(() => {
+  if (activeTab.value === 'profile') {
+    return ['name', 'role', 'email', 'avatar'].some((k) => profileForm[k] !== user.value[k])
+  }
+  if (activeTab.value === 'general') {
+    return JSON.stringify(thresholdsForm.value) !== JSON.stringify(settings.value.thresholds)
+  }
+  if (activeTab.value === 'notifications') {
+    return JSON.stringify(channelsForm.value) !== JSON.stringify(settings.value.notifications)
+  }
+  return false
+})
 
 const resetForm = () => {
   if (activeTab.value === 'profile') {
@@ -203,35 +267,27 @@ const resetForm = () => {
     thresholdsForm.value = JSON.parse(JSON.stringify(DEFAULTS.settings.thresholds))
   } else if (activeTab.value === 'notifications') {
     channelsForm.value = JSON.parse(JSON.stringify(DEFAULTS.settings.notifications))
+  } else {
+    return
   }
-  
-  toast.add('Factory Defaults Restored', 'Original system settings have been loaded into the form.', 'info')
+
+  toast.add('Defaults restored', 'Original values loaded into the form. Save to apply them.', 'info')
 }
 
 const saveSettings = () => {
   if (activeTab.value === 'profile') {
-    updateProfile(profileForm)
-    toast.add('Profile Updated', 'Your profile changes have been applied.', 'success')
+    updateProfile({ ...profileForm })
+    toast.add('Profile saved', 'Your details are visible to the rest of the team.', 'success')
   } else if (activeTab.value === 'general') {
     updateSettings({ thresholds: JSON.parse(JSON.stringify(thresholdsForm.value)) })
-    toast.add('Thresholds Updated', 'System monitoring thresholds have been saved.', 'success')
+    toast.add('Thresholds saved', 'Detection rules now use the new limits.', 'success')
   } else if (activeTab.value === 'notifications') {
     updateSettings({ notifications: JSON.parse(JSON.stringify(channelsForm.value)) })
-    toast.add('Notifications Updated', 'Your communication preferences has been saved.', 'success')
+    toast.add('Channels saved', 'Alert delivery preferences updated.', 'success')
   }
 }
 
-// Watch global state for changes (though mostly updated from here)
+const scan = () => toast.add('Scanning', 'Insert and touch your security key to continue.', 'info')
+
 watch(user, (val) => Object.assign(profileForm, val), { deep: true })
 </script>
-
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-</style>
